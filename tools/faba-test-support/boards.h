@@ -1,0 +1,1 @@
+/* Host tests use the real VFS interface without device board definitions. */

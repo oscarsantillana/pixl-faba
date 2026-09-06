@@ -1,0 +1,12 @@
+[
+  {
+    "patch": "application.patch",
+    "files_verified": 38,
+    "result": "all patched files match published source"
+  },
+  {
+    "patch": "chameleon.patch",
+    "files_verified": 1,
+    "result": "all patched files match published source"
+  }
+]

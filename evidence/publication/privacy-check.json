@@ -1,0 +1,9 @@
+{
+  "elf_path_replacements": 2,
+  "elf_size_unchanged": true,
+  "unchanged_load_segments": 4,
+  "unchanged_allocated_sections": 12,
+  "firmware_zip_sha256": "abc0ddd43b30b7ce89cea4ae8c4054bd5548a3a9222049c6ffe1f3e73d7b5270",
+  "history": "Published history replaced with a single commit using a generic project identity.",
+  "scope": "Personal author metadata and local workstation paths removed. Public repository account links and the tested firmware tag identity retained."
+}

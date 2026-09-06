@@ -1,0 +1,74 @@
+#include "app_ble.h"
+#include "mini_app_registry.h"
+
+#include "mui_include.h"
+
+#include "ble_scene.h"
+#include "ble_status_view.h"
+#include "i18n/language.h"
+
+static void app_ble_on_run(mini_app_inst_t *p_app_inst);
+static void app_ble_on_kill(mini_app_inst_t *p_app_inst);
+static void app_ble_on_event(mini_app_inst_t *p_app_inst, mini_app_event_t *p_event);
+
+static mui_back_app_ctx_t app_ble_back_ctx;
+
+static void app_ble_register_back_handler(app_ble_t *p_app_handle) {
+    app_ble_back_ctx.p_view_dispatcher = p_app_handle->p_view_dispatcher;
+    app_ble_back_ctx.p_text_input = NULL;
+    app_ble_back_ctx.p_msg_box = NULL;
+    app_ble_back_ctx.p_scene_dispatcher = p_app_handle->p_scene_dispatcher;
+    app_ble_back_ctx.extra_cb = NULL;
+    app_ble_back_ctx.extra_ctx = NULL;
+    mui_back_register_app(p_app_handle->p_view_dispatcher, &app_ble_back_ctx, MINI_APP_ID_BLE);
+}
+
+void app_ble_on_run(mini_app_inst_t *p_app_inst) {
+
+    app_ble_t *p_app_handle = mui_mem_malloc(sizeof(app_ble_t));
+
+    p_app_inst->p_handle = p_app_handle;
+    p_app_handle->p_view_dispatcher = mui_view_dispatcher_create();
+    p_app_handle->p_ble_view = ble_status_view_create();
+    p_app_handle->p_scene_dispatcher = mui_scene_dispatcher_create();
+
+    ble_status_view_set_user_data(p_app_handle->p_ble_view, p_app_handle);
+
+    mui_view_dispatcher_add_view(p_app_handle->p_view_dispatcher, BLE_VIEW_ID_MAIN,
+                                 ble_status_view_get_view(p_app_handle->p_ble_view));
+    mui_view_dispatcher_attach(p_app_handle->p_view_dispatcher, MUI_LAYER_WINDOW);
+
+    mui_scene_dispatcher_set_user_data(p_app_handle->p_scene_dispatcher, p_app_handle);
+    mui_scene_dispatcher_set_scene_defines(p_app_handle->p_scene_dispatcher, ble_scene_defines, BLE_SCENE_MAX);
+
+    mui_scene_dispatcher_next_scene(p_app_handle->p_scene_dispatcher, BLE_SCENE_CONNECT_START);
+
+    app_ble_register_back_handler(p_app_handle);
+}
+
+void app_ble_on_kill(mini_app_inst_t *p_app_inst) {
+    app_ble_t *p_app_handle = p_app_inst->p_handle;
+
+    mui_view_dispatcher_detach(p_app_handle->p_view_dispatcher, MUI_LAYER_WINDOW);
+    mui_view_dispatcher_free(p_app_handle->p_view_dispatcher);
+    ble_status_view_free(p_app_handle->p_ble_view);
+    mui_scene_dispatcher_free(p_app_handle->p_scene_dispatcher);
+
+    mui_mem_free(p_app_handle);
+
+    p_app_inst->p_handle = NULL;
+}
+
+void app_ble_on_event(mini_app_inst_t *p_app_inst, mini_app_event_t *p_event) {}
+
+mini_app_t app_ble_info = {.id = MINI_APP_ID_BLE,
+                                 .name = "蓝牙传输",
+                                 .name_i18n_key = _L_APP_BLE,
+                                 .icon = 0xe1b5,
+                                 .deamon = false,
+                                 .sys = false,
+                                 .hibernate_enabled = false,
+                                 .icon_32x32 = &app_ble_transfer_32x32,
+                                 .run_cb = app_ble_on_run,
+                                 .kill_cb = app_ble_on_kill,
+                                 .on_event_cb = app_ble_on_event};

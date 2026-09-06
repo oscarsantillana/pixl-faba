@@ -1,0 +1,12 @@
+diff --git a/Package.swift b/Package.swift
+index c398aee..cc8ec09 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -18,7 +18,6 @@ let package = Package(
+   ],
+   dependencies: [
+     .package(url: "https://github.com/weichsel/ZIPFoundation", exact: "0.9.20"),
+-    .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.5.0"),
+   ],
+   targets: [
+     .target(

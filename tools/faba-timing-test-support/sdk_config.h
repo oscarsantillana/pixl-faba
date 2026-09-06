@@ -1,0 +1,2 @@
+#define TIMER2_ENABLED 0
+#define NRFX_TIMER2_ENABLED 0

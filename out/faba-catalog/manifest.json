@@ -1,0 +1,69 @@
+{
+  "source": {
+    "repository": "https://github.com/wansors/myfaba-hacks",
+    "path": "TAGS.md",
+    "commit": "b9f894d294c4a2e2e7a85bfba983959a014c937c",
+    "source_url": "https://github.com/wansors/myfaba-hacks/blob/b9f894d294c4a2e2e7a85bfba983959a014c937c/TAGS.md",
+    "retrieved": "2026-09-06"
+  },
+  "entries": 257,
+  "record_size": 160,
+  "files": [
+    {
+      "file": "cat0.bin",
+      "device_path": "E:/faba/cat0.bin",
+      "language": "Spanish",
+      "count": 48,
+      "bytes": 7696,
+      "sha256": "ce02382fda67fccdb50f62a364374bf9e3b08ac41bd8caecebbc5f549b12819e"
+    },
+    {
+      "file": "cat1.bin",
+      "device_path": "E:/faba/cat1.bin",
+      "language": "Catalan",
+      "count": 4,
+      "bytes": 656,
+      "sha256": "58e45ed945762ed42cb53c79e3f3fbc3032589642887dc4f96885821ae5bd723"
+    },
+    {
+      "file": "cat2.bin",
+      "device_path": "E:/faba/cat2.bin",
+      "language": "French",
+      "count": 69,
+      "bytes": 11056,
+      "sha256": "de5e231627365f11280c3484c353fc830238ffd00804fc08af9a18b7954dff3a"
+    },
+    {
+      "file": "cat3.bin",
+      "device_path": "E:/faba/cat3.bin",
+      "language": "Italian",
+      "count": 129,
+      "bytes": 20656,
+      "sha256": "769762d751cf796caae3f31ed952b24740b3aaeddf435179bf175fb1e977ce00"
+    },
+    {
+      "file": "cat4.bin",
+      "device_path": "E:/faba/cat4.bin",
+      "language": "Italian/English",
+      "count": 1,
+      "bytes": 176,
+      "sha256": "aaa882cc028f0dc3ff35c7088d7d583e7c77039f6b07b75502ac5f8b720db48c"
+    },
+    {
+      "file": "cat5.bin",
+      "device_path": "E:/faba/cat5.bin",
+      "language": "Latam",
+      "count": 3,
+      "bytes": 496,
+      "sha256": "37a2c76b573cb4d49679d3b14b6e91f63bd25d951696d312e86a354d178a5d5b"
+    },
+    {
+      "file": "cat6.bin",
+      "device_path": "E:/faba/cat6.bin",
+      "language": "Neutral",
+      "count": 3,
+      "bytes": 496,
+      "sha256": "baaff9aaf506183f397e5af226bffc43b0c77870de9176f2175a72dbf3d33368"
+    }
+  ]
+}

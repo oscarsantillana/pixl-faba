@@ -1,0 +1,10 @@
+warning: could not determine XCTest paths: terminated(1): /usr/bin/xcrun --sdk macosx --show-sdk-platform-path output:
+    xcrun: error: unable to lookup item 'PlatformPath' from command line tools installation
+    xcrun: error: unable to lookup item 'PlatformPath' in SDK '/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk'
+    
+[0/1] Planning build
+Building for production...
+Build complete! (0.27s)
+Nordic package parser: valid; parts=1
+Signature valid against upstream Pixl public key: true
+Tools ready in <repository>/.build/bin. No Bluetooth connection or firmware write was performed.

@@ -1,0 +1,107 @@
+diff --git a/firmware/application/src/rfid/nfctag/hf/nfc_14a.c b/firmware/application/src/rfid/nfctag/hf/nfc_14a.c
+index 43f2e25..6cdb511 100644
+--- a/firmware/application/src/rfid/nfctag/hf/nfc_14a.c
++++ b/firmware/application/src/rfid/nfctag/hf/nfc_14a.c
+@@ -15,6 +15,7 @@ NRF_LOG_MODULE_REGISTER();
+ #include "rfid_port.h"
+ #include "syssleep.h"
+ #include "tag_emulation.h"
++#include "faba_trace.h"
+ 
+ 
+ #if NFC_TAG_14A_RX_PARITY_AUTO_DEL_ENABLE
+@@ -297,6 +298,7 @@ uint8_t nfc_tag_14a_unwrap_frame(const uint8_t *pbtFrame, const size_t szFrameBi
+ void nfc_tag_14a_tx_bytes(uint8_t *data, uint32_t bytes, bool appendCrc) {
+     ASSERT(bytes <= MAX_NFC_TX_BUFFER_SIZE);
+     NFC_14A_TX_BYTE_CORE(data, bytes, appendCrc, NRF_NFCT_FRAME_DELAY_MODE_WINDOWGRID);
++    faba_trace_record(appendCrc ? FABA_TX_CRC : FABA_TX_BYTES, m_tag_state_14a, m_nfc_tx_buffer, bytes * 8);
+ }
+ 
+ /**
+@@ -325,6 +327,7 @@ void nfc_tag_14a_tx_bits(uint8_t *data, uint32_t bits) {
+     m_is_responded = true;
+     memcpy(m_nfc_tx_buffer, data, (bits / 8) + (bits % 8 > 0 ? 1 : 0));
+     NFC_14A_TX_BITS_CORE(bits, NRF_NFCT_FRAME_DELAY_MODE_WINDOWGRID);
++    faba_trace_record(FABA_TX_BITS, m_tag_state_14a, m_nfc_tx_buffer, bits);
+ }
+ 
+ /**@brief The function of sending n bits is implemented, and this implementation is automatically sent SOF
+@@ -336,6 +339,7 @@ void nfc_tag_14a_tx_nbit(uint8_t data, uint32_t bits) {
+     m_is_responded = true;
+     m_nfc_tx_buffer[0] = data;
+     NFC_14A_TX_BITS_CORE(bits, NRF_NFCT_FRAME_DELAY_MODE_WINDOWGRID);
++    faba_trace_record(FABA_TX_BITS, m_tag_state_14a, m_nfc_tx_buffer, bits);
+ }
+ 
+ /**
+@@ -413,6 +417,14 @@ void nfc_tag_14a_data_process(uint8_t *p_data) {
+         }
+         // Preparation status, processing news related to anti -collision
+         case NFC_TAG_STATE_14A_READY: {
++            /* Faba reads page7 before completing UID cascade selection.
++             * Gate this extension to its diagnostic mode and require CRC-A. */
++            if (faba_compat_early_read(p_data, szDataBits) &&
++                m_tag_handler.cb_state != NULL && nfc_tag_14a_checks_crc(p_data, 4)) {
++                m_tag_state_14a = NFC_TAG_STATE_14A_ACTIVE;
++                m_tag_handler.cb_state(p_data, szDataBits);
++                return;
++            }
+             static uint8_t uid[5] = { 0x00 };
+             nfc_tag_14a_cascade_level_t level;
+             // Extract cascade level
+@@ -575,6 +587,7 @@ void nfc_tag_14a_event_callback(nrfx_nfct_evt_t const *p_event) {
+     // Select action to process.
+     switch (p_event->evt_id) {
+         case NRFX_NFCT_EVT_FIELD_DETECTED: {
++            faba_trace_record(FABA_FIELD_ON, m_tag_state_14a, NULL, 0);
+             sleep_timer_stop();
+ 
+             g_is_tag_emulating = true;
+@@ -600,6 +613,7 @@ void nfc_tag_14a_event_callback(nrfx_nfct_evt_t const *p_event) {
+             break;
+         }
+         case NRFX_NFCT_EVT_FIELD_LOST: {
++            faba_trace_record(FABA_FIELD_OFF, m_tag_state_14a, NULL, 0);
+             g_is_tag_emulating = false;
+             // call sleep_timer_start *after* unsetting g_is_tag_emulating
+             sleep_timer_start(SLEEP_DELAY_MS_FIELD_NFC_LOST);
+@@ -611,6 +625,7 @@ void nfc_tag_14a_event_callback(nrfx_nfct_evt_t const *p_event) {
+             break;
+         }
+         case NRFX_NFCT_EVT_TX_FRAMESTART: {
++            faba_timing_tx_start(m_tag_state_14a);
+             // NRF_LOG_INFO("TX start.\n");
+             // NRF_LOG_INFO("TX config is %d.\n", nrf_nfct_tx_frame_config_get(NRF_NFCT));
+             break;
+@@ -619,6 +634,7 @@ void nfc_tag_14a_event_callback(nrfx_nfct_evt_t const *p_event) {
+             // NRF_LOG_INFO("TX end.\n");
+             // After the transmission is over, you need to be able to receive it
+             NRFX_NFCT_RX_BYTES
++            faba_timing_tx_end(m_tag_state_14a);
+             break;
+         }
+         case NRFX_NFCT_EVT_RX_FRAMEEND: {
+@@ -633,7 +649,14 @@ void nfc_tag_14a_event_callback(nrfx_nfct_evt_t const *p_event) {
+             // One more layer of pressure stack, but it seems to have little effect on performance
+             // This function processes the data sent by the card reader, and then read that you don't need to reply to the card reader. If you need it, reply
+             // Don't reply if you don't need it, it makes sense, right?This is science.
++            uint16_t trace_bits = NRF_NFCT->RXD.AMOUNT & (NFCT_RXD_AMOUNT_RXDATABITS_Msk | NFCT_RXD_AMOUNT_RXDATABYTES_Msk);
++            faba_trace_record(FABA_RX, m_tag_state_14a, m_nfc_rx_buffer, trace_bits);
++            uint32_t trace_rx_status = p_event->params.rx_frameend.rx_status;
++            if (trace_rx_status)
++                faba_trace_record(FABA_RX_ERROR, m_tag_state_14a, (uint8_t *)&trace_rx_status, 32);
+             nfc_tag_14a_data_process(m_nfc_rx_buffer);
++            uint8_t trace_responded = m_is_responded;
++            faba_trace_record(FABA_RX_RESULT, m_tag_state_14a, &trace_responded, 8);
+             // The above prompt tells us that when we do not need to reply to the card reader, we need to manually enable it
+             if (!m_is_responded) {
+                 nfc_fdt_reset();
+@@ -642,6 +665,8 @@ void nfc_tag_14a_event_callback(nrfx_nfct_evt_t const *p_event) {
+             break;
+         }
+         case NRFX_NFCT_EVT_ERROR: {
++            uint32_t trace_error = p_event->params.error.reason;
++            faba_trace_record(FABA_ERROR, m_tag_state_14a, (uint8_t *)&trace_error, 32);
+             // According to the error reasons, the log prints to help the development of the possibilities during development
+             switch (p_event->params.error.reason) {
+                 case NRFX_NFCT_ERROR_FRAMEDELAYTIMEOUT: {

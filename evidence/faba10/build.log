@@ -1,0 +1,564 @@
+old:  #define GIT_COMMIT "7a07ab9"
+#define GIT_BRANCH "HEAD"
+#define GIT_BRANCH_NUM "1"
+#define VERSION "2.16.1-faba9"
+#define BUILD_DIRTY 1
+#define BUILD_DATE "2026-09-06"
+#define TARGET 0
+
+new:  #define GIT_COMMIT "7a07ab9"
+#define GIT_BRANCH "HEAD"
+#define GIT_BRANCH_NUM "1"
+#define VERSION "2.16.1-faba10"
+#define BUILD_DIRTY 1
+#define BUILD_DATE "2026-09-06"
+#define TARGET 0
+
+Version information updated
+build: BOARD=KEYPAD RELEASE=1 APP_VERSION=21601 FW_VERSION=2.16.1-faba10
+Assembling file: gcc_startup_nrf52.S
+Compiling file: nrf_log_backend_rtt.c
+Compiling file: nrf_log_backend_serial.c
+Compiling file: nrf_log_default_backends.c
+Compiling file: nrf_log_frontend.c
+Compiling file: nrf_log_str_formatter.c
+Compiling file: app_button.c
+Compiling file: app_error.c
+Compiling file: app_error_handler_gcc.c
+Version information hasn't changed
+build: BOARD=KEYPAD RELEASE=1 APP_VERSION=21601 FW_VERSION=2.16.1-faba10
+Compiling file: app_error_weak.c
+Compiling file: app_scheduler.c
+Compiling file: app_timer2.c
+Compiling file: app_util_platform.c
+Compiling file: drv_rtc.c
+Compiling file: hardfault_implementation.c
+Compiling file: nrf_assert.c
+Compiling file: nrf_atfifo.c
+Compiling file: nrf_atflags.c
+Compiling file: nrf_atomic.c
+Compiling file: nrf_balloc.c
+Compiling file: nrf_fprintf.c
+Compiling file: nrf_fprintf_format.c
+Compiling file: crc32.c
+Compiling file: nrf_memobj.c
+Compiling file: nrf_ringbuf.c
+Compiling file: nrf_section_iter.c
+Compiling file: app_pwm.c
+Compiling file: nrf_sortlist.c
+Compiling file: nrf_strerror.c
+Compiling file: system_nrf52.c
+Compiling file: boards.c
+Compiling file: nrf_drv_clock.c
+Compiling file: nrfx_atomic.c
+Compiling file: nrfx_timer.c
+Compiling file: nrfx_nfct.c
+Compiling file: nrfx_prs.c
+Compiling file: nrfx_clock.c
+Compiling file: nrfx_gpiote.c
+Compiling file: nrfx_spi.c
+Compiling file: nrfx_spim.c
+Compiling file: nrfx_wdt.c
+Compiling file: nrfx_ppi.c
+Compiling file: nrf_drv_ppi.c
+Compiling file: nrf_drv_spi.c
+Compiling file: bsp.c
+Compiling file: bsp_nfc.c
+Compiling file: mem_manager.c
+Compiling file: SEGGER_RTT.c
+Compiling file: SEGGER_RTT_Syscalls_GCC.c
+Compiling file: SEGGER_RTT_printf.c
+Compiling file: ble_advdata.c
+Compiling file: ble_advertising.c
+Compiling file: ble_conn_params.c
+Compiling file: ble_conn_state.c
+Compiling file: ble_srv_common.c
+Compiling file: nrf_ble_gatt.c
+Compiling file: nrf_ble_qwr.c
+Compiling file: ble_link_ctx_manager.c
+Compiling file: ble_nus.c
+Compiling file: utf.c
+Compiling file: nrf_sdh.c
+Compiling file: nrf_sdh_ble.c
+Compiling file: nrf_sdh_soc.c
+Compiling file: nrfx_saadc.c
+Compiling file: nrf_crypto_hmac.c
+Compiling file: nrf_crypto_aes.c
+Compiling file: nrf_crypto_error.c
+Compiling file: nrf_crypto_init.c
+Compiling file: mbedtls_backend_hmac.c
+Compiling file: mbedtls_backend_aes.c
+Compiling file: aes.c
+Compiling file: aesni.c
+Compiling file: arc4.c
+Compiling file: aria.c
+Compiling file: asn1parse.c
+Compiling file: asn1write.c
+Compiling file: base64.c
+Compiling file: bignum.c
+Compiling file: blowfish.c
+Compiling file: camellia.c
+Compiling file: ccm.c
+Compiling file: certs.c
+Compiling file: chacha20.c
+Compiling file: chachapoly.c
+Compiling file: cipher.c
+Compiling file: cipher_wrap.c
+Compiling file: cmac.c
+Compiling file: ctr_drbg.c
+Compiling file: debug.c
+Compiling file: des.c
+Compiling file: dhm.c
+Compiling file: ecdh.c
+Compiling file: ecdsa.c
+Compiling file: ecjpake.c
+Compiling file: ecp.c
+Compiling file: ecp_curves.c
+Compiling file: entropy.c
+Compiling file: entropy_poll.c
+Compiling file: error.c
+Compiling file: gcm.c
+Compiling file: havege.c
+Compiling file: hmac_drbg.c
+Compiling file: md.c
+Compiling file: md2.c
+Compiling file: md4.c
+Compiling file: md5.c
+Compiling file: md_wrap.c
+Compiling file: memory_buffer_alloc.c
+Compiling file: net_sockets.c
+Compiling file: nist_kw.c
+Compiling file: oid.c
+Compiling file: padlock.c
+Compiling file: pem.c
+Compiling file: pk.c
+Compiling file: pk_wrap.c
+Compiling file: pkcs11.c
+Compiling file: pkcs12.c
+Compiling file: pkcs5.c
+Compiling file: pkparse.c
+Compiling file: pkwrite.c
+Compiling file: platform.c
+Compiling file: platform_util.c
+Compiling file: poly1305.c
+Compiling file: ripemd160.c
+Compiling file: rsa.c
+Compiling file: rsa_internal.c
+Compiling file: sha1.c
+Compiling file: sha256.c
+Compiling file: sha512.c
+Compiling file: ssl_cache.c
+Compiling file: ssl_ciphersuites.c
+Compiling file: ssl_cli.c
+Compiling file: ssl_cookie.c
+Compiling file: ssl_srv.c
+Compiling file: ssl_ticket.c
+Compiling file: ssl_tls.c
+Compiling file: threading.c
+Compiling file: version.c
+Compiling file: version_features.c
+Compiling file: x509.c
+Compiling file: x509_create.c
+Compiling file: x509_crl.c
+Compiling file: x509_crt.c
+Compiling file: x509_csr.c
+Compiling file: x509write_crt.c
+Compiling file: x509write_csr.c
+Compiling file: xtea.c
+Compiling file: main.c
+Compiling file: ntag_emu_v2.c
+Compiling file: ntag_store.c
+Compiling file: bat.c
+Compiling file: utils.c
+Compiling file: version2.c
+Compiling file: amiibo_helper.c
+Compiling file: mui_qrcode_helper.c
+Compiling file: app_error_handler.c
+Compiling file: interrupt_handler.c
+Compiling file: libc_nano_stubs.c
+Compiling file: hal_spi_bus.c
+Compiling file: hal_spi_flash.c
+Compiling file: hal_internal_flash.c
+Compiling file: bsp_btn.c
+Compiling file: settings.c
+Compiling file: faba_trace.c
+Compiling file: faba_diag.c
+Compiling file: faba_favorites.c
+Compiling file: faba_player.c
+Compiling file: chameleon_scene_faba_catalog.c
+Compiling file: faba_trace_device.c
+Compiling file: faba_trace_store.c
+Compiling file: faba_trace_timing.c
+Compiling file: cache.c
+Compiling file: ble_main.c
+Compiling file: ble_df_driver.c
+Compiling file: ble_amiibolink.c
+Compiling file: cwalk2.c
+Compiling file: vfs.c
+Compiling file: vfs_meta.c
+Compiling file: vfs_driver_spiffs.c
+Compiling file: vfs_driver_lfs.c
+Compiling file: df_core.c
+Compiling file: df_proto_info.c
+Compiling file: df_proto_vfs.c
+Compiling file: mui_view.c
+Compiling file: mui_view_port.c
+Compiling file: mui_view_dispatcher.c
+Compiling file: mui_scene_dispatcher.c
+Compiling file: mui_u8g2.c
+Compiling file: u8g2_font_likeminecraft_te.c
+Compiling file: u8g2_font_siji_t_6x10.c
+Compiling file: u8g2_font_wqy12_t_gb2312a.c
+Compiling file: u8g2_font_wqy12_t_gb2312a_lite.c
+Compiling file: mui_core.c
+Compiling file: mui_canvas.c
+Compiling file: mui_event.c
+Compiling file: mui_input.c
+Compiling file: mui_back.c
+Compiling file: mui_back_helper.c
+Compiling file: mui_element.c
+Compiling file: mui_mem.c
+Compiling file: mui_anim.c
+Compiling file: mui_math.c
+Compiling file: mui_resource.c
+Compiling file: mui_list_view.c
+Compiling file: mui_text_input.c
+Compiling file: mui_msg_box.c
+Compiling file: mui_progress_bar.c
+Compiling file: mui_toast_view.c
+Compiling file: mini_app_launcher.c
+Compiling file: mini_app_registry.c
+Compiling file: mini_app_data.c
+Compiling file: app_status_bar.c
+Compiling file: status_bar_view.c
+Compiling file: app_ble.c
+Compiling file: ble_status_view.c
+Compiling file: ble_scene.c
+Compiling file: ble_scene_connect_start.c
+Compiling file: app_player.c
+Compiling file: player_view.c
+Compiling file: player_scene.c
+Compiling file: player_scene_file_browser.c
+Compiling file: player_scene_play.c
+Compiling file: app_game.c
+Compiling file: game_view.c
+Compiling file: game_scene.c
+Compiling file: game_scene_game_list.c
+Compiling file: game_scene_play.c
+Compiling file: driver.c
+Compiling file: tiny_lander.c
+Compiling file: tiny_invaders.c
+Compiling file: tiny_arkanoid.c
+Compiling file: tiny_tris.c
+Compiling file: app_amiibolink.c
+Compiling file: amiibolink_view.c
+Compiling file: amiibolink_scene.c
+Compiling file: amiibolink_scene_main.c
+Compiling file: amiibolink_scene_menu.c
+Compiling file: amiibolink_scene_menu_mode.c
+Compiling file: amiibolink_scene_menu_ver.c
+Compiling file: app_amiidb.c
+Compiling file: amiidb_scene.c
+Compiling file: amiidb_scene_main.c
+Compiling file: amiidb_scene_game_list.c
+Compiling file: amiidb_scene_amiibo_detail.c
+Compiling file: amiidb_scene_amiibo_detail_menu.c
+Compiling file: amiidb_scene_amiibo_search.c
+Compiling file: amiidb_scene_fav_list.c
+Compiling file: amiidb_scene_fav_select.c
+Compiling file: amiidb_scene_fav_list_menu.c
+Compiling file: amiidb_scene_data_list.c
+Compiling file: amiidb_scene_data_select.c
+Compiling file: amiidb_scene_data_list_menu.c
+Compiling file: amiidb_scene_settings.c
+Compiling file: amiidb_scene_settings_slot_num.c
+Compiling file: amiidb_api_slot.c
+Compiling file: amiidb_api_fav.c
+Compiling file: amiidb_api_db.c
+Compiling file: amiibo_view.c
+Compiling file: app_chameleon.c
+In file included from ./src/mui/mlib_common.h:17,
+                 from ./src/mui/mui_common.h:13,
+                 from ./src/mui/mui_scene_dispatcher.h:4,
+                 from ./src/app/amiidb/scene/amiidb_scene.h:4,
+                 from ./src/app/amiidb/scene/amiidb_scene_fav_list_menu.c:2:
+./src/app/amiidb/scene/amiidb_scene_fav_list_menu.c: In function 'amiidb_scene_fav_list_menu_msg_box_delete_cb':
+../components/mlib/m-string.h:2596:22: warning: 'm_string_reset' accessing 12 bytes in a region of size 8 [-Wstringop-overflow=]
+ 2596 | #define string_reset m_string_reset
+./src/app/amiidb/scene/amiidb_scene_fav_list_menu.c:56:13: note: in expansion of macro 'string_reset'
+   56 |             string_reset(app->cur_fav_dir);
+      |             ^~~~~~~~~~~~
+../components/mlib/m-string.h:2596:22: note: referencing argument 1 of type 'struct m_string_s[1]'
+ 2596 | #define string_reset m_string_reset
+./src/app/amiidb/scene/amiidb_scene_fav_list_menu.c:56:13: note: in expansion of macro 'string_reset'
+   56 |             string_reset(app->cur_fav_dir);
+      |             ^~~~~~~~~~~~
+../components/mlib/m-string.h:275:1: note: in a call to function 'm_string_reset'
+  275 | m_string_reset(m_string_t v)
+      | ^~~~~~~~~~~~~~
+Compiling file: chameleon_view.c
+Compiling file: chameleon_scene_factory.c
+Compiling file: chameleon_scene_main.c
+Compiling file: chameleon_scene_menu.c
+Compiling file: chameleon_scene_faba.c
+Compiling file: chameleon_scene_menu_card_advanced.c
+Compiling file: chameleon_scene_menu_card_advanced_id_size.c
+Compiling file: chameleon_scene_menu_card_advanced_id_edit.c
+Compiling file: chameleon_scene_menu_card_slot.c
+Compiling file: chameleon_scene_menu_card_slot_select.c
+Compiling file: chameleon_scene_menu_card_data.c
+Compiling file: chameleon_scene_menu_card_type.c
+Compiling file: chameleon_scene_menu_card_slot_num_select.c
+Compiling file: chameleon_scene_menu_card_write_mode_select.c
+Compiling file: chameleon_scene_menu_card_data_file_load.c
+Compiling file: chameleon_scene_menu_card_data_file_save.c
+Compiling file: chameleon_scene_menu_card_set_name.c
+Compiling file: chameleon_scene.c
+Compiling file: fds_utils.c
+Compiling file: tag_helper.c
+Compiling file: app_desktop.c
+Compiling file: app_list_view.c
+Compiling file: app_amiibo.c
+Compiling file: amiibo_detail_view.c
+Compiling file: amiibo_scene.c
+Compiling file: amiibo_scene_amiibo_detail.c
+Compiling file: amiibo_scene_amiibo_detail_menu.c
+Compiling file: amiibo_scene_file_browser.c
+Compiling file: amiibo_scene_file_browser_menu.c
+Compiling file: app_settings.c
+Compiling file: settings_scene.c
+Compiling file: settings_scene_main.c
+In file included from ./src/mui/mlib_common.h:17,
+                 from ./src/mui/mui_common.h:13,
+                 from ./src/mui/mui_include.h:5,
+                 from ./src/app/amiibo/view/amiibo_detail_view.h:3,
+                 from ./src/app/amiibo/app_amiibo.h:4,
+                 from ./src/app/amiibo/app_amiibo.c:1:
+./src/app/amiibo/app_amiibo.c: In function 'app_amiibo_on_kill':
+../components/mlib/m-string.h:2594:22: warning: 'm_string_clear' accessing 12 bytes in a region of size 8 [-Wstringop-overflow=]
+ 2594 | #define string_clear m_string_clear
+./src/app/amiibo/app_amiibo.c:172:5: note: in expansion of macro 'string_clear'
+  172 |     string_clear(p_app_handle->current_file);
+      |     ^~~~~~~~~~~~
+../components/mlib/m-string.h:2594:22: note: referencing argument 1 of type 'struct m_string_s[1]'
+ 2594 | #define string_clear m_string_clear
+./src/app/amiibo/app_amiibo.c:172:5: note: in expansion of macro 'string_clear'
+  172 |     string_clear(p_app_handle->current_file);
+      |     ^~~~~~~~~~~~
+../components/mlib/m-string.h:229:1: note: in a call to function 'm_string_clear'
+  229 | m_string_clear(m_string_t v)
+      | ^~~~~~~~~~~~~~
+Compiling file: settings_scene_version.c
+Compiling file: settings_scene_sleep_timeout.c
+In file included from ./src/mui/mlib_common.h:17,
+                 from ./src/mui/mui_common.h:13,
+                 from ./src/mui/mui_scene_dispatcher.h:4,
+                 from ./src/app/amiibo/scene/amiibo_scene.h:4,
+                 from ./src/app/amiibo/scene/amiibo_scene_amiibo_detail.c:2:
+In function 'ntag_update',
+    inlined from 'ntag_update_cb' at ./src/app/amiibo/scene/amiibo_scene_amiibo_detail.c:145:9:
+../components/mlib/m-string.h:2601:24: warning: 'm_string_set_cstr' accessing 12 bytes in a region of size 8 [-Wstringop-overflow=]
+ 2601 | #define string_set_str m_string_set_cstr
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail.c:130:17: note: in expansion of macro 'string_set_str'
+  130 |                 string_set_str(app->current_file, new_name);
+      |                 ^~~~~~~~~~~~~~
+../components/mlib/m-string.h:2601:24: note: referencing argument 1 of type 'struct m_string_s[1]'
+ 2601 | #define string_set_str m_string_set_cstr
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail.c:130:17: note: in expansion of macro 'string_set_str'
+  130 |                 string_set_str(app->current_file, new_name);
+      |                 ^~~~~~~~~~~~~~
+../components/mlib/m-string.h:2601:24: note: referencing argument 2 of type 'const char[0]'
+ 2601 | #define string_set_str m_string_set_cstr
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail.c:130:17: note: in expansion of macro 'string_set_str'
+  130 |                 string_set_str(app->current_file, new_name);
+      |                 ^~~~~~~~~~~~~~
+../components/mlib/m-string.h: In function 'ntag_update_cb':
+../components/mlib/m-string.h:411:1: note: in a call to function 'm_string_set_cstr'
+  411 | m_string_set_cstr(m_string_t v, const char str[])
+      | ^~~~~~~~~~~~~~~~~
+Compiling file: settings_scene_lcd_backlight.c
+In file included from ./src/mui/mlib_common.h:17,
+                 from ./src/mui/mui_common.h:13,
+                 from ./src/mui/mui_scene_dispatcher.h:4,
+                 from ./src/app/amiibo/scene/amiibo_scene.h:4,
+                 from ./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:2:
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c: In function 'amiibo_scene_amiibo_detail_delete_tag_confirmed':
+../components/mlib/m-string.h:2603:20: warning: 'm_string_set' accessing 12 bytes in a region of size 8 [-Wstringop-overflow=]
+ 2603 | #define string_set m_string_set
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:94:17: note: in expansion of macro 'string_set'
+   94 |                 string_set(app->current_file, *string_array_get(app->amiibo_files, focus - 1));
+      |                 ^~~~~~~~~~
+../components/mlib/m-string.h:2603:20: note: referencing argument 1 of type 'struct m_string_s[1]'
+ 2603 | #define string_set m_string_set
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:94:17: note: in expansion of macro 'string_set'
+   94 |                 string_set(app->current_file, *string_array_get(app->amiibo_files, focus - 1));
+      |                 ^~~~~~~~~~
+../components/mlib/m-string.h:2603:20: note: referencing argument 2 of type 'const struct m_string_s[1]'
+ 2603 | #define string_set m_string_set
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:94:17: note: in expansion of macro 'string_set'
+   94 |                 string_set(app->current_file, *string_array_get(app->amiibo_files, focus - 1));
+      |                 ^~~~~~~~~~
+../components/mlib/m-string.h:441:1: note: in a call to function 'm_string_set'
+  441 | m_string_set (m_string_t v1, const m_string_t v2)
+      | ^~~~~~~~~~~~
+../components/mlib/m-string.h:2603:20: warning: 'm_string_set' accessing 12 bytes in a region of size 8 [-Wstringop-overflow=]
+ 2603 | #define string_set m_string_set
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:97:17: note: in expansion of macro 'string_set'
+   97 |                 string_set(app->current_file, *string_array_get(app->amiibo_files, focus + 1));
+      |                 ^~~~~~~~~~
+../components/mlib/m-string.h:2603:20: note: referencing argument 1 of type 'struct m_string_s[1]'
+ 2603 | #define string_set m_string_set
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:97:17: note: in expansion of macro 'string_set'
+   97 |                 string_set(app->current_file, *string_array_get(app->amiibo_files, focus + 1));
+      |                 ^~~~~~~~~~
+../components/mlib/m-string.h:2603:20: note: referencing argument 2 of type 'const struct m_string_s[1]'
+ 2603 | #define string_set m_string_set
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:97:17: note: in expansion of macro 'string_set'
+   97 |                 string_set(app->current_file, *string_array_get(app->amiibo_files, focus + 1));
+      |                 ^~~~~~~~~~
+../components/mlib/m-string.h:441:1: note: in a call to function 'm_string_set'
+  441 | m_string_set (m_string_t v1, const m_string_t v2)
+      | ^~~~~~~~~~~~
+../components/mlib/m-string.h:2601:24: warning: 'm_string_set_cstr' accessing 12 bytes in a region of size 8 [-Wstringop-overflow=]
+ 2601 | #define string_set_str m_string_set_cstr
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:100:17: note: in expansion of macro 'string_set_str'
+  100 |                 string_set_str(app->current_file, "");
+      |                 ^~~~~~~~~~~~~~
+../components/mlib/m-string.h:2601:24: note: referencing argument 1 of type 'struct m_string_s[1]'
+ 2601 | #define string_set_str m_string_set_cstr
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:100:17: note: in expansion of macro 'string_set_str'
+  100 |                 string_set_str(app->current_file, "");
+      |                 ^~~~~~~~~~~~~~
+../components/mlib/m-string.h:2601:24: note: referencing argument 2 of type 'const char[0]'
+ 2601 | #define string_set_str m_string_set_cstr
+./src/app/amiibo/scene/amiibo_scene_amiibo_detail_menu.c:100:17: note: in expansion of macro 'string_set_str'
+  100 |                 string_set_str(app->current_file, "");
+      |                 ^~~~~~~~~~~~~~
+../components/mlib/m-string.h:411:1: note: in a call to function 'm_string_set_cstr'
+  411 | m_string_set_cstr(m_string_t v, const char str[])
+      | ^~~~~~~~~~~~~~~~~
+Compiling file: settings_scene_oled_contrast.c
+Compiling file: settings_scene_language.c
+Compiling file: settings_scene_storage.c
+Compiling file: settings_scene_about.c
+Compiling file: settings_scene_app_management.c
+Compiling file: en_US.c
+Compiling file: zh_Hans.c
+Compiling file: zh_TW.c
+Compiling file: es_ES.c
+Compiling file: hu_HU.c
+Compiling file: de_DE.c
+Compiling file: fr_FR.c
+Compiling file: nl_NL.c
+Compiling file: pt_BR.c
+Compiling file: ja_JP.c
+Compiling file: pt_PT.c
+Compiling file: it_IT.c
+Compiling file: ru_RU.c
+Compiling file: pl_PL.c
+Compiling file: sv_SE.c
+Compiling file: language.c
+Compiling file: hal_nfc_t2t.c
+Compiling file: db_amiibo.c
+Compiling file: db_game.c
+Compiling file: db_link.c
+Compiling file: db_search.c
+Compiling file: nrf_pwr_mgmt.c
+Compiling file: nfc_platform.c
+Compiling file: amiibo.c
+Compiling file: drbg.c
+Compiling file: keygen.c
+./src/hal/hal_nfc_t2t.c: In function 'hal_nfc_send':
+./src/hal/hal_nfc_t2t.c:675:12: warning: passing argument 1 of 'memcpy' discards 'volatile' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  675 |     memcpy(m_nfc_buffer, p_data, NFC_BUFFER_SIZE);
+      |            ^~~~~~~~~~~~
+In file included from ./src/hal/hal_nfc_t2t.h:56,
+                 from ./src/hal/hal_nfc_t2t.c:45:
+/private/tmp/faba-native-build/xpack-arm-none-eabi-gcc-12.3.1-1.2/arm-none-eabi/include/string.h:31:18: note: expected 'void * restrict' but argument is of type 'volatile uint8_t *' {aka 'volatile unsigned char *'}
+   31 | void *   memcpy (void *__restrict, const void *__restrict, size_t);
+      |                  ^
+Compiling file: tlsf.c
+Compiling file: spiffs_cache.c
+Compiling file: spiffs_check.c
+Compiling file: spiffs_gc.c
+Compiling file: spiffs_hydrogen.c
+Compiling file: spiffs_nucleus.c
+Compiling file: crypto1_helper.c
+Compiling file: nfc_14a.c
+Compiling file: nfc_mf1.c
+Compiling file: nfc_mf0_ntag.c
+Compiling file: crc_utils.c
+In file included from ../components/chameleon-ultra/firmware/application/src/rfid/nfctag/hf/nfc_14a.c:16:
+../components/chameleon-ultra/firmware/application/src/utils/syssleep.h:21:1: warning: useless type name in empty declaration
+   21 | void sleep_timer_start(uint32_t time_ms);
+      | ^~~~
+../components/chameleon-ultra/firmware/application/src/utils/syssleep.h:22:1: warning: useless type name in empty declaration
+   22 | void sleep_timer_stop(void);
+      | ^~~~
+Compiling file: hex_utils.c
+Compiling file: mf1_crapto1.c
+Compiling file: mf1_crypto1.c
+Compiling file: parity.c
+Compiling file: tag_emulation.c
+Compiling file: tag_persistence.c
+Compiling file: lfs.c
+Compiling file: lfs_util.c
+Compiling file: cwalk.c
+Compiling file: qrcodegen.c
+Compiling file: u8g2_bitmap.c
+Compiling file: u8g2_box.c
+Compiling file: u8g2_buffer.c
+Compiling file: u8g2_circle.c
+Compiling file: u8g2_cleardisplay.c
+Compiling file: u8g2_d_memory.c
+Compiling file: u8g2_d_setup.c
+Compiling file: u8g2_font.c
+Compiling file: u8g2_hvline.c
+Compiling file: u8g2_input_value.c
+Compiling file: u8g2_intersection.c
+Compiling file: u8g2_kerning.c
+Compiling file: u8g2_line.c
+Compiling file: u8g2_ll_hvline.c
+Compiling file: u8g2_message.c
+Compiling file: u8g2_polygon.c
+Compiling file: u8g2_selection_list.c
+Compiling file: u8g2_setup.c
+Compiling file: u8log.c
+Compiling file: u8log_u8g2.c
+Compiling file: u8log_u8x8.c
+Compiling file: u8x8_8x8.c
+Compiling file: u8x8_byte.c
+Compiling file: u8x8_cad.c
+Compiling file: u8x8_capture.c
+Compiling file: u8x8_d_st7567.c
+Compiling file: u8x8_debounce.c
+Compiling file: u8x8_display.c
+Compiling file: u8x8_fonts.c
+Compiling file: u8x8_gpio.c
+Compiling file: u8x8_input_value.c
+Compiling file: u8x8_message.c
+Compiling file: u8x8_selection_list.c
+Compiling file: u8x8_setup.c
+Compiling file: u8x8_string.c
+Compiling file: u8x8_u16toa.c
+Compiling file: u8x8_u8toa.c
+Compiling file: u8x8_d_ssd1306_128x64_noname.c
+Linking target: ../_build_faba/pixljs.out
+   text	   data	    bss	    dec	    hex	filename
+ 368076	   1464	  40464	 410004	  64194	../_build_faba/pixljs.out
+Preparing: ../_build_faba/pixljs.hex
+Preparing: ../_build_faba/pixljs.bin
+DONE pixljs
+Expected version label verified in compiled image
+Version information hasn't changed
+build: BOARD=KEYPAD RELEASE=1 APP_VERSION=21601 FW_VERSION=2.16.1-faba10
+Compiling file: faba_favorites.c
+Version information hasn't changed
+build: BOARD=KEYPAD RELEASE=1 APP_VERSION=21601 FW_VERSION=2.16.1-faba10
+Linking target: ../_build_faba/pixljs.out
+   text	   data	    bss	    dec	    hex	filename
+ 368076	   1464	  40464	 410004	  64194	../_build_faba/pixljs.out
+Preparing: ../_build_faba/pixljs.hex
+Preparing: ../_build_faba/pixljs.bin
+DONE pixljs
+Expected version label verified in compiled image

@@ -1,0 +1,1688 @@
+diff --git a/fw/application/Makefile b/fw/application/Makefile
+index 704aac7..ebe5798 100644
+--- a/fw/application/Makefile
++++ b/fw/application/Makefile
+@@ -185,6 +185,14 @@ SRC_FILES += \
+   $(PROJ_DIR)/hal/hal_internal_flash.c \
+   $(PROJ_DIR)/mod/bsp_btn.c \
+   $(PROJ_DIR)/mod/settings.c \
++  $(PROJ_DIR)/mod/faba_trace.c \
++  $(PROJ_DIR)/mod/faba_diag.c \
++  $(PROJ_DIR)/mod/faba_favorites.c \
++  $(PROJ_DIR)/mod/faba_player.c \
++  $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_faba_catalog.c \
++  $(PROJ_DIR)/mod/faba_trace_device.c \
++  $(PROJ_DIR)/mod/faba_trace_store.c \
++  $(PROJ_DIR)/mod/faba_trace_timing.c \
+   $(PROJ_DIR)/mod/cache.c \
+   $(PROJ_DIR)/mod/ble/ble_main.c \
+   $(PROJ_DIR)/mod/ble/ble_df_driver.c \
+@@ -278,6 +286,7 @@ SRC_FILES += \
+   $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_factory.c \
+   $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_main.c \
+   $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_menu.c \
++  $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_faba.c \
+   $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_menu_card_advanced.c \
+   $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_menu_card_advanced_id_size.c \
+   $(PROJ_DIR)/app/chameleon/scene/chameleon_scene_menu_card_advanced_id_edit.c \
+@@ -624,6 +633,7 @@ endif
+ # OPT += -flto
+ 
+ # C flags common to all targets
++CFLAGS += -DFABA_MEMORY_DIAGNOSTICS
+ CFLAGS += $(OPT)
+ CFLAGS += -DAPP_TIMER_V2
+ CFLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
+@@ -688,7 +698,8 @@ LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ LDFLAGS += -Wl,--gc-sections
+ # use newlib in nano version
+ LDFLAGS += --specs=nano.specs
+-LDFLAGS += -u _printf_float
++# No active firmware printf format uses floating point. Keeping this forced
++# newlib module would consume the flash needed by the Faba diagnostic UI.
+ 
+ pixljs: CFLAGS += -D__HEAP_SIZE=4096
+ pixljs: CFLAGS += -D__STACK_SIZE=8192
+diff --git a/fw/application/src/app/chameleon/app_chameleon.c b/fw/application/src/app/chameleon/app_chameleon.c
+index 808db6a..ef11d05 100644
+--- a/fw/application/src/app/chameleon/app_chameleon.c
++++ b/fw/application/src/app/chameleon/app_chameleon.c
+@@ -8,6 +8,9 @@
+ #include "i18n/language.h"
+ #include "settings.h"
+ #include "tag_helper.h"
++#include "faba_trace.h"
++#include "faba_player.h"
++#include "faba_icon.h"
+ 
+ static void app_chameleon_on_run(mini_app_inst_t *p_app_inst);
+ static void app_chameleon_on_kill(mini_app_inst_t *p_app_inst);
+@@ -26,14 +29,14 @@ static bool app_chameleon_back_extra_cb(void *ctx, mui_input_event_t *event) {
+     return chameleon_scene_menu_card_data_file_load_try_back(ctx);
+ }
+ 
+-static void app_chameleon_register_back_handler(app_chameleon_t *p_app_handle) {
++static void app_chameleon_register_back_handler(app_chameleon_t *p_app_handle, uint32_t id) {
+     app_chameleon_back_ctx.p_view_dispatcher = p_app_handle->p_view_dispatcher;
+     app_chameleon_back_ctx.p_text_input = p_app_handle->p_text_input;
+     app_chameleon_back_ctx.p_msg_box = p_app_handle->p_msg_box;
+     app_chameleon_back_ctx.p_scene_dispatcher = p_app_handle->p_scene_dispatcher;
+     app_chameleon_back_ctx.extra_cb = app_chameleon_back_extra_cb;
+     app_chameleon_back_ctx.extra_ctx = p_app_handle;
+-    mui_back_register_app(p_app_handle->p_view_dispatcher, &app_chameleon_back_ctx, MINI_APP_ID_CHAMELEON);
++    mui_back_register_app(p_app_handle->p_view_dispatcher, &app_chameleon_back_ctx, id);
+ }
+ 
+ void app_chameleon_on_run(mini_app_inst_t *p_app_inst) {
+@@ -86,18 +89,22 @@ void app_chameleon_on_run(mini_app_inst_t *p_app_inst) {
+     if (!fds_config_file_exists()) {
+         mui_scene_dispatcher_next_scene(p_app_handle->p_scene_dispatcher, CHAMELEON_SCENE_FACTORY);
+     } else {
+-        mui_scene_dispatcher_next_scene(p_app_handle->p_scene_dispatcher, CHAMELEON_SCENE_MAIN);
++        mui_scene_dispatcher_next_scene(p_app_handle->p_scene_dispatcher,
++            p_app_inst->p_app->id == MINI_APP_ID_FABA ? CHAMELEON_SCENE_FABA_CATALOG : CHAMELEON_SCENE_MAIN);
+     }
+ 
+-    app_chameleon_register_back_handler(p_app_handle);
++    app_chameleon_register_back_handler(p_app_handle, p_app_inst->p_app->id);
+ }
+ 
+ void app_chameleon_on_kill(mini_app_inst_t *p_app_inst) {
++    faba_player_stop();
++    faba_record_finish();
+     app_chameleon_t *p_app_handle = p_app_inst->p_handle;
+ 
+     app_chameleon_retain_data_t *p_retain = (app_chameleon_retain_data_t *)p_app_inst->p_retain_data;
+ 
+-    p_retain->cycle_mode_index = chameleon_view_get_index(p_app_handle->p_chameleon_view);
++    if (p_retain)
++        p_retain->cycle_mode_index = chameleon_view_get_index(p_app_handle->p_chameleon_view);
+ 
+     settings_data_t *settings = settings_get_data();
+     if (tag_helper_valid_default_slot() &&
+@@ -112,10 +119,12 @@ void app_chameleon_on_kill(mini_app_inst_t *p_app_inst) {
+ 
+     mui_scene_dispatcher_exit(p_app_handle->p_scene_dispatcher);
+     mui_scene_dispatcher_free(p_app_handle->p_scene_dispatcher);
++    faba_catalog_close();
+ 
+     mui_view_dispatcher_detach(p_app_handle->p_view_dispatcher, MUI_LAYER_FULLSCREEN);
+     mui_view_dispatcher_free(p_app_handle->p_view_dispatcher);
+     mui_list_view_free(p_app_handle->p_list_view);
++    mui_msg_box_free(p_app_handle->p_msg_box);
+     mui_text_input_free(p_app_handle->p_text_input);
+     chameleon_view_free(p_app_handle->p_chameleon_view);
+ 
+@@ -141,3 +150,10 @@ mini_app_t app_chameleon_info = {.id = MINI_APP_ID_CHAMELEON,
+                                  .run_cb = app_chameleon_on_run,
+                                  .kill_cb = app_chameleon_on_kill,
+                                  .on_event_cb = app_chameleon_on_event};
++
++mini_app_t app_faba_info = {.id = MINI_APP_ID_FABA,
++    .name = "Faba", .name_i18n_key = _L_APP_FABA,
++    .icon = 0xe1db, .deamon = false, .sys = false, .hibernate_enabled = false,
++    .icon_32x32 = &app_faba_32x32,
++    .run_cb = app_chameleon_on_run, .kill_cb = app_chameleon_on_kill,
++    .on_event_cb = app_chameleon_on_event};
+diff --git a/fw/application/src/app/chameleon/app_chameleon.h b/fw/application/src/app/chameleon/app_chameleon.h
+index d6a8727..c697eaa 100644
+--- a/fw/application/src/app/chameleon/app_chameleon.h
++++ b/fw/application/src/app/chameleon/app_chameleon.h
+@@ -40,5 +40,6 @@ typedef enum {
+ } app_chameleon_view_id_t;
+ 
+ extern mini_app_t app_chameleon_info;
++extern mini_app_t app_faba_info;
+ 
+ #endif
+\ No newline at end of file
+diff --git a/fw/application/src/app/chameleon/scene/chameleon_scene_config.h b/fw/application/src/app/chameleon/scene/chameleon_scene_config.h
+index dfcb799..12dd7bf 100644
+--- a/fw/application/src/app/chameleon/scene/chameleon_scene_config.h
++++ b/fw/application/src/app/chameleon/scene/chameleon_scene_config.h
+@@ -1,6 +1,11 @@
+ ADD_SCENE(chameleon, factory, FACTORY)
+ ADD_SCENE(chameleon, main, MAIN)
+ ADD_SCENE(chameleon, menu, MENU)
++ADD_SCENE(chameleon, faba_catalog, FABA_CATALOG)
++ADD_SCENE(chameleon, faba_titles, FABA_TITLES)
++ADD_SCENE(chameleon, faba_play, FABA_PLAY)
++ADD_SCENE(chameleon, faba, FABA)
++ADD_SCENE(chameleon, faba_record, FABA_RECORD)
+ ADD_SCENE(chameleon, menu_card_advanced, MENU_CARD_ADVANCED)
+ ADD_SCENE(chameleon, menu_card_advanced_id_size, MENU_CARD_ADVANCED_ID_SIZE)
+ ADD_SCENE(chameleon, menu_card_advanced_id_edit, MENU_CARD_ADVANCED_ID_EDIT)
+diff --git a/fw/application/src/app/chameleon/scene/chameleon_scene_faba.c b/fw/application/src/app/chameleon/scene/chameleon_scene_faba.c
+new file mode 100644
+index 0000000..4ac15d9
+--- /dev/null
++++ b/fw/application/src/app/chameleon/scene/chameleon_scene_faba.c
+@@ -0,0 +1,109 @@
++#include "app_chameleon.h"
++#include "chameleon_scene.h"
++#include "faba_trace.h"
++#include "tag_helper.h"
++#include "tag_emulation.h"
++#include "hal_nfc_t2t.h"
++#include "nrf_pwr_mgmt.h"
++#include "mini_app_launcher.h"
++#include "mui_icons.h"
++#include <stdio.h>
++
++enum { RECORD_FABA, RECORD_PHONE, CHOOSE_SLOT, RETRY_SAVE, HOME, BACK };
++static uint8_t reader;
++static uint16_t previous_timeout;
++static int32_t save_result;
++
++static void faba_select(mui_list_view_event_t event, mui_list_view_t *view, mui_list_item_t *item) {
++    app_chameleon_t *app = view->user_data;
++    switch ((uintptr_t)item->user_data) {
++    case RECORD_FABA:
++    case RECORD_PHONE:
++        reader = (uintptr_t)item->user_data;
++        if (!faba_trace_begin(reader)) {
++            mui_toast_view_show(app->p_toast_view, "Check NTAG213 slot, save trace or restart");
++            break;
++        }
++        mui_scene_dispatcher_next_scene(app->p_scene_dispatcher, CHAMELEON_SCENE_FABA_RECORD);
++        break;
++    case CHOOSE_SLOT:
++        mui_scene_dispatcher_next_scene(app->p_scene_dispatcher, CHAMELEON_SCENE_MENU_CARD_SLOT_SELECT);
++        break;
++    case RETRY_SAVE:
++        save_result = faba_trace_save();
++        mui_toast_view_show(app->p_toast_view, save_result == 0 ? "Trace saved" : "Save failed; trace stays in RAM");
++        break;
++    case HOME: mini_app_launcher_exit(mini_app_launcher()); break;
++    case BACK:
++        if (mui_scene_dispatcher_is_at_root(app->p_scene_dispatcher))
++            mini_app_launcher_exit(mini_app_launcher());
++        else mui_scene_dispatcher_previous_scene(app->p_scene_dispatcher);
++        break;
++    }
++}
++
++void chameleon_scene_faba_on_enter(void *user_data) {
++    app_chameleon_t *app = user_data;
++    tag_emulation_sense_end();
++    hal_nfc_set_nrfx_irq_enable(false);
++    char text[64];
++    const faba_trace_header_t *h = faba_trace_header();
++    const tag_specific_type_name_t *type = tag_helper_get_tag_type_name(tag_helper_get_active_tag_type());
++    snprintf(text, sizeof(text), "Slot %02u / %s", tag_emulation_get_slot() + 1, type->short_name);
++    mui_list_view_add_item_ext(app->p_list_view, ICON_SLOT, "Faba diagnostics", text, (void *)CHOOSE_SLOT);
++    mui_list_view_add_item(app->p_list_view, ICON_VIEW, "Record Faba", (void *)RECORD_FABA);
++    mui_list_view_add_item(app->p_list_view, ICON_VIEW, "Phone control", (void *)RECORD_PHONE);
++    if (h->version) {
++        snprintf(text, sizeof(text), "%lu events / %lu dropped", (unsigned long)h->count, (unsigned long)h->dropped);
++        mui_list_view_add_item_ext(app->p_list_view, ICON_FILE,
++            *faba_trace_last_path() ? faba_trace_last_path() : "Trace not saved", text, (void *)RETRY_SAVE);
++        if (save_result) mui_list_view_add_item(app->p_list_view, ICON_FILE, "Retry save", (void *)RETRY_SAVE);
++    }
++    mui_list_view_add_item(app->p_list_view, ICON_BACK, "Back", (void *)BACK);
++    mui_list_view_add_item(app->p_list_view, ICON_HOME, "Main menu", (void *)HOME);
++    mui_list_view_set_selected_cb(app->p_list_view, faba_select);
++    mui_view_dispatcher_switch_to_view(app->p_view_dispatcher, CHAMELEON_VIEW_ID_LIST);
++}
++
++void chameleon_scene_faba_on_exit(void *user_data) {
++    app_chameleon_t *app = user_data;
++    mui_list_view_clear_items(app->p_list_view);
++}
++
++static void record_select(mui_list_view_event_t event, mui_list_view_t *view, mui_list_item_t *item) {
++    app_chameleon_t *app = view->user_data;
++    mui_scene_dispatcher_previous_scene(app->p_scene_dispatcher);
++}
++
++void chameleon_scene_faba_record_on_enter(void *user_data) {
++    app_chameleon_t *app = user_data;
++    mui_list_view_add_item(app->p_list_view, ICON_FILE, "Stop and save", 0);
++    mui_list_view_add_item(app->p_list_view, ICON_VIEW,
++        reader ? "Scan once with iPhone" : "Place on Faba briefly", 0);
++    mui_list_view_add_item(app->p_list_view, ICON_VIEW, "Then press Stop", 0);
++    mui_list_view_set_selected_cb(app->p_list_view, record_select);
++    mui_view_dispatcher_switch_to_view(app->p_view_dispatcher, CHAMELEON_VIEW_ID_LIST);
++    previous_timeout = nrf_pwr_mgmt_get_timeout();
++    nrf_pwr_mgmt_set_timeout(0);
++    hal_nfc_set_nrfx_irq_enable(true);
++    tag_emulation_sense_run();
++}
++
++void faba_record_finish(void) {
++    if (!faba_trace_active()) return;
++    /* Do not report events caused by stopping the emulator as reader events. */
++    faba_trace_stop();
++    tag_emulation_sense_end();
++    hal_nfc_set_nrfx_irq_enable(false);
++    faba_timing_stop();
++    save_result = faba_trace_save();
++    nrf_pwr_mgmt_feed();
++    nrf_pwr_mgmt_set_timeout(previous_timeout);
++}
++
++void chameleon_scene_faba_record_on_exit(void *user_data) {
++    app_chameleon_t *app = user_data;
++    faba_record_finish();
++    mui_list_view_clear_items(app->p_list_view);
++    if (save_result) mui_toast_view_show(app->p_toast_view, "Save failed; retry in Faba menu");
++}
+diff --git a/fw/application/src/app/chameleon/scene/chameleon_scene_menu.c b/fw/application/src/app/chameleon/scene/chameleon_scene_menu.c
+index 2c7d370..e4511d9 100644
+--- a/fw/application/src/app/chameleon/scene/chameleon_scene_menu.c
++++ b/fw/application/src/app/chameleon/scene/chameleon_scene_menu.c
+@@ -17,6 +17,7 @@
+ #include "settings.h"
+ 
+ typedef enum {
++    CHAMELEON_MENU_FABA,
+     CHAMELEON_MENU_HOME,
+     CHAMELEON_MENU_BACK,
+     CHAMELEON_MENU_SLOT,
+@@ -32,6 +33,9 @@ void chameleon_scene_menu_on_event(mui_list_view_event_t event, mui_list_view_t
+     app_chameleon_t *app = p_list_view->user_data;
+     chameleon_menu_item_t item = (chameleon_menu_item_t)p_item->user_data;
+     switch (item) {
++    case CHAMELEON_MENU_FABA:
++        mui_scene_dispatcher_next_scene(app->p_scene_dispatcher, CHAMELEON_SCENE_FABA);
++        break;
+     case CHAMELEON_MENU_HOME:
+         mini_app_launcher_exit(mini_app_launcher());
+         break;
+@@ -87,6 +91,7 @@ void chameleon_scene_menu_on_enter(void *user_data) {
+     const tag_specific_type_name_t *tag_name = tag_helper_get_tag_type_name(tag_type);
+     const nfc_tag_14a_coll_res_reference_t *coll_res = tag_helper_get_active_coll_res_ref();
+ 
++    mui_list_view_add_item(app->p_list_view, ICON_VIEW, "Faba", (void *)CHAMELEON_MENU_FABA);
+     sprintf(buff, "[%02d]", slot + 1);
+     mui_list_view_add_item_ext(app->p_list_view, ICON_VIEW, _T(APP_CHAMELEON_CARD_SLOT), buff,
+                                (void *)CHAMELEON_MENU_SLOT_SELECT);
+diff --git a/fw/application/src/app_error_handler.c b/fw/application/src/app_error_handler.c
+index f5ce362..433f0be 100644
+--- a/fw/application/src/app_error_handler.c
++++ b/fw/application/src/app_error_handler.c
+@@ -1,3 +1,5 @@
++#include <stdlib.h>
++#include "faba_diag.h"
+ #include "app_error.h"
+ 
+ #include "nrf_log.h"
+@@ -21,6 +23,13 @@
+  */
+ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+ {
++    if (id == NRF_FAULT_ID_SDK_ERROR && info) {
++        error_info_t *e = (error_info_t *)info;
++        faba_diag_fault(id, (uint32_t)e->p_file_name, e->err_code);
++        faba_diag_location(e->line_num);
++    } else {
++        faba_diag_fault(id, pc, info);
++    }
+     __disable_irq();
+     NRF_LOG_FINAL_FLUSH();
+ 
+@@ -90,28 +99,8 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+ 
+ 
+ 
+-void HardFault_Handler(void)
+-{
+-    uint32_t *sp = (uint32_t *) __get_MSP(); // Get stack pointer
+-    uint32_t ia = sp[12]; // Get instruction address from stack
+-
+-    printf("Hard Fault at address: 0x%08x\r\n", (unsigned int)ia);
+-
+-    cache_clean();
+-
+-#ifndef DEBUG
+-    NRF_LOG_WARNING("System reset");
+-    NVIC_SystemReset();
+-#else
+-    // endless loop here to wait debugger attach
+-    NRF_BREAKPOINT_COND;
+-    while(1)
+-        ;
+-#endif
+-
+-}
+-
+ void _exit(int status){
++    faba_diag_fault(0xF0000002u, (uint32_t)__builtin_return_address(0), status);
+     NRF_LOG_WARNING("System reset: %d", status);
+ #ifndef DEBUG
+     NVIC_SystemReset();
+@@ -121,4 +110,12 @@ void _exit(int status){
+     while(1)
+         ;
+ #endif
+-}
+\ No newline at end of file
++}
++/* Record C-library assertions before abort reaches _exit. Preserve the first
++ * failure so later reset/abort wrappers cannot hide its source location. */
++void __assert_func(const char *file, int line, const char *func, const char *expr) {
++    (void)func;
++    faba_diag_fault(0xF0000001u, (uint32_t)file, (uint32_t)expr);
++    faba_diag_location((uint32_t)line);
++    abort();
++}
+diff --git a/fw/application/src/core/mini_app_data.c b/fw/application/src/core/mini_app_data.c
+index b773c24..74fd989 100644
+--- a/fw/application/src/core/mini_app_data.c
++++ b/fw/application/src/core/mini_app_data.c
+@@ -16,6 +16,7 @@
+ const mini_app_t* mini_app_registry[] = {
+     &app_status_bar_info,
+     &app_desktop_info,
++    &app_faba_info,
+ #ifdef APP_LEGLAMIIBO_ENABLE
+     &app_amiibo_info,
+ #endif
+diff --git a/fw/application/src/core/mini_app_launcher.c b/fw/application/src/core/mini_app_launcher.c
+index 5eeff1e..230d79e 100644
+--- a/fw/application/src/core/mini_app_launcher.c
++++ b/fw/application/src/core/mini_app_launcher.c
+@@ -1,3 +1,4 @@
++#include "faba_diag.h"
+ 
+ #include "mini_app_launcher.h"
+ #include "mini_app_registry.h"
+@@ -13,6 +14,7 @@ mini_app_launcher_t *mini_app_launcher() {
+ }
+ 
+ static void mini_app_launcher_inst_kill(mini_app_launcher_t *p_launcher, mini_app_inst_t *p_app_inst) {
++    faba_diag_kill(p_app_inst->p_app->id);
+     p_app_inst->p_app->kill_cb(p_app_inst);
+     p_app_inst->state = APP_STATE_KILLED;
+ }
+diff --git a/fw/application/src/core/mini_app_registry.h b/fw/application/src/core/mini_app_registry.h
+index c217487..dfa82d3 100644
+--- a/fw/application/src/core/mini_app_registry.h
++++ b/fw/application/src/core/mini_app_registry.h
+@@ -13,7 +13,8 @@ typedef enum {
+     MINI_APP_ID_BLE = 6,
+     MINI_APP_ID_SETTINGS = 7,
+     MINI_APP_ID_CHAMELEON = 8,
+-    MINI_APP_ID_GAME = 9
++    MINI_APP_ID_GAME = 9,
++    MINI_APP_ID_FABA = 10
+ 
+ } mini_app_id_t;
+ 
+diff --git a/fw/application/src/i18n/en_US.c b/fw/application/src/i18n/en_US.c
+index 81b5297..82b7103 100644
+--- a/fw/application/src/i18n/en_US.c
++++ b/fw/application/src/i18n/en_US.c
+@@ -1,5 +1,6 @@
+ #include "string_id.h"
+ const char * const lang_en_US[_L_COUNT] = {
++    [_L_APP_FABA] = "Faba",
+     [_L_ON] = "ON",
+     [_L_OFF] = "OFF",
+     [_L_ON_F] = "[ON]",
+diff --git a/fw/application/src/i18n/string_id.h b/fw/application/src/i18n/string_id.h
+index 1df79c6..d265335 100644
+--- a/fw/application/src/i18n/string_id.h
++++ b/fw/application/src/i18n/string_id.h
+@@ -194,6 +194,7 @@ typedef enum {
+     _L_APP_GAME_TINY_INVADERS,
+     _L_APP_GAME_TINY_LANDER,
+     _L_APP_GAME_TINY_TRIS,
++    _L_APP_FABA,
+     _L_COUNT,
+ } L_StringID;
+ #endif
+diff --git a/fw/application/src/interrupt_handler.c b/fw/application/src/interrupt_handler.c
+index 9177c4f..65b37c1 100644
+--- a/fw/application/src/interrupt_handler.c
++++ b/fw/application/src/interrupt_handler.c
+@@ -1,10 +1,35 @@
+ #include "nrf_nvic.h"
++#include "faba_diag.h"
++#include <stdint.h>
+ 
+-#define DEF_INTERRUPT_HANDLER(name)                                                                                    \
+-    void name(void) { NVIC_SystemReset(); }
+-
+-// DEF_INTERRUPT_HANDLER(HardFault_Handler)
++/* Receive the exception stack before a C prologue changes MSP. Never inspect
++ * an invalid frame or walk the UI heap while handling a processor exception. */
++__attribute__((used, noinline, noreturn))
++void faba_exception_reset(uint32_t *stack, uint32_t exc_return, uint32_t exception) {
++    uint32_t pc = 0, saved_lr = 0;
++    uint32_t cfsr = SCB->CFSR;
++    uintptr_t frame = (uintptr_t)stack;
++    if (!(exc_return & 16)) frame += 18 * sizeof(uint32_t);
++    if (!(cfsr & 0x3838) && !(frame & 3) && frame >= 0x20000000u && frame <= 0x20010000u - 32) {
++        uint32_t *core = (uint32_t *)frame;
++        pc = core[6]; saved_lr = core[5];
++    }
++    faba_diag_fault(0xF1000000u | exception, pc, saved_lr);
++    faba_diag_cpu_status(cfsr);
++    NVIC_SystemReset();
++}
++#define DEF_INTERRUPT_HANDLER(name) \
++    __attribute__((naked)) void name(void) { \
++        __asm volatile("tst lr, #4\n" \
++                       "ite eq\n" \
++                       "mrseq r0, msp\n" \
++                       "mrsne r0, psp\n" \
++                       "mov r1, lr\n" \
++                       "mrs r2, ipsr\n" \
++                       "b faba_exception_reset\n"); \
++    }
++DEF_INTERRUPT_HANDLER(HardFault_Handler)
+ DEF_INTERRUPT_HANDLER(MemoryManagement_Handler)
+ DEF_INTERRUPT_HANDLER(BusFault_Handler)
+ DEF_INTERRUPT_HANDLER(UsageFault_Handler)
+-DEF_INTERRUPT_HANDLER(DebugMon_Handler)
+\ No newline at end of file
++DEF_INTERRUPT_HANDLER(DebugMon_Handler)
+diff --git a/fw/application/src/main.c b/fw/application/src/main.c
+index d64182e..cd59524 100644
+--- a/fw/application/src/main.c
++++ b/fw/application/src/main.c
+@@ -1,3 +1,4 @@
++#include "faba_diag.h"
+ /**
+  * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
+  *
+@@ -235,6 +236,7 @@ static uint32_t check_wakeup_src(void) {
+ int main(void) {
+     ret_code_t err_code;
+ 
++    faba_diag_boot(nrf_power_resetreas_get());
+     log_init();
+ 
+     APP_SCHED_INIT(APP_SCHED_MAX_EVENT_SIZE, APP_SCHED_QUEUE_SIZE);
+diff --git a/fw/application/src/mod/df/df_proto_info.c b/fw/application/src/mod/df/df_proto_info.c
+index e69ffd1..68de922 100644
+--- a/fw/application/src/mod/df/df_proto_info.c
++++ b/fw/application/src/mod/df/df_proto_info.c
+@@ -1,3 +1,4 @@
++#include "faba_diag.h"
+ #include "df_proto_info.h"
+ #include "df_buffer.h"
+ #include "utils2.h"
+@@ -35,7 +36,16 @@ void df_proto_handler_info_enter_dfu(df_event_t *evt) {
+     }
+ }
+ 
++static void df_proto_handler_faba_diag(df_event_t *evt) {
++    if (evt->type != DF_EVENT_DATA_RECEVIED) return;
++    df_frame_t out;
++    memcpy(out.data, (const void *)faba_diag_report(), sizeof(faba_diag_t));
++    OUT_FRAME_WITH_DATA_0(out, 0x03, DF_STATUS_OK, sizeof(faba_diag_t));
++    df_core_send_frame(&out);
++}
++
+ const df_cmd_entry_t df_proto_handler_info_entries[] = {
++    {0x03, df_proto_handler_faba_diag},
+     {DF_PROTO_CMD_INFO_VERSION_INFO, df_proto_handler_info_get_version},
+     {DF_PROTO_CMD_INFO_ENTER_DFU, df_proto_handler_info_enter_dfu},
+     {0, NULL}};
+\ No newline at end of file
+diff --git a/fw/application/src/mod/faba_trace.c b/fw/application/src/mod/faba_trace.c
+new file mode 100644
+index 0000000..40d0ad1
+--- /dev/null
++++ b/fw/application/src/mod/faba_trace.c
+@@ -0,0 +1,96 @@
++#include "faba_trace.h"
++#include <string.h>
++
++_Static_assert(sizeof(faba_trace_header_t) == 72, "trace header ABI");
++_Static_assert(sizeof(faba_trace_event_t) == 24, "trace event ABI");
++
++static faba_trace_t *trace;
++static faba_trace_header_t last_header;
++static volatile bool recording;
++static volatile bool playing;
++void faba_compat_set_playing(bool enabled) { playing = enabled; }
++
++bool faba_trace_start(const faba_trace_header_t *metadata) {
++    if (trace) return false; /* Never discard a pending capture. */
++    trace = faba_trace_alloc(sizeof(*trace));
++    if (!trace) return false;
++    recording = false;
++    memset(trace, 0, sizeof(*trace));
++    trace->header = *metadata;
++    memcpy(trace->header.magic, "FABATRC1", 8);
++    trace->header.version = 1;
++    trace->header.event_size = sizeof(faba_trace_event_t);
++    trace->header.count = 0;
++    trace->header.dropped = 0;
++    if (trace->header.uid_size > sizeof(trace->header.uid))
++        trace->header.uid_size = sizeof(trace->header.uid);
++    trace->header.firmware[sizeof(trace->header.firmware) - 1] = 0;
++    recording = true;
++    return true;
++}
++
++static void reverse_events(unsigned first, unsigned end) {
++    while (first < end && first < --end) {
++        faba_trace_event_t tmp = trace->events[first];
++        trace->events[first++] = trace->events[end];
++        trace->events[end] = tmp;
++    }
++}
++
++void faba_trace_stop(void) {
++    bool was_recording = recording;
++    recording = false; /* ISR must stop writing before rotating the saved tail. */
++    if (!was_recording || !trace || trace->header.reserved[1] != 1 || !trace->header.dropped) return;
++    unsigned rotate = trace->header.dropped % (FABA_TRACE_CAPACITY - 32);
++    reverse_events(32, 32 + rotate);
++    reverse_events(32 + rotate, FABA_TRACE_CAPACITY);
++    reverse_events(32, FABA_TRACE_CAPACITY);
++}
++bool faba_trace_active(void) { return recording; }
++const faba_trace_t *faba_trace_get(void) { return trace; }
++const faba_trace_header_t *faba_trace_header(void) { return trace ? &trace->header : &last_header; }
++void faba_trace_release(void) {
++    recording = false;
++    if (!trace) return;
++    last_header = trace->header;
++    faba_trace_free(trace);
++    trace = NULL;
++}
++size_t faba_trace_size(void) {
++    return trace ? sizeof(trace->header) + trace->header.count * sizeof(faba_trace_event_t) : 0;
++}
++
++void faba_trace_record(uint8_t kind, uint8_t state, const uint8_t *data, uint16_t bits) {
++    if (!recording) return;
++    unsigned index = trace->header.count;
++    if (index == FABA_TRACE_CAPACITY) {
++        if (trace->header.dropped == UINT32_MAX) return;
++        if (trace->header.reserved[1] != 1) {
++            trace->header.dropped++;
++            return;
++        }
++        index = 32 + trace->header.dropped % (FABA_TRACE_CAPACITY - 32);
++        trace->header.dropped++;
++    } else {
++        trace->header.count++;
++    }
++    faba_trace_event_t *event = &trace->events[index];
++    memset(event, 0, sizeof(*event));
++    event->cycles = faba_trace_cycles();
++    event->rtc = faba_trace_rtc();
++    event->kind = kind;
++    event->state = state;
++    event->bits = bits;
++    size_t bytes = ((size_t)bits + 7) / 8;
++    if (bytes > sizeof(event->data)) bytes = sizeof(event->data);
++    if (data && bytes) memcpy(event->data, data, bytes);
++}
++
++/* Opt-in compatibility for the captured original-Faba sequence. Its READ07
++ * arrives in READY after SELECT CL1. Ordinary Card Emulator and Phone control
++ * keep the original selection rules. CRC validation remains at the caller. */
++bool faba_compat_early_read(const uint8_t *data, uint16_t bits) {
++    return (playing || (recording && trace && trace->header.reader == 0 &&
++        trace->header.tag_type == 1100 /* NTAG213 */)) &&
++        bits == 32 && data && data[0] == 0x30 && data[1] == 0x07;
++}
+diff --git a/fw/application/src/mod/faba_trace.h b/fw/application/src/mod/faba_trace.h
+new file mode 100644
+index 0000000..c4712aa
+--- /dev/null
++++ b/fw/application/src/mod/faba_trace.h
+@@ -0,0 +1,80 @@
++#ifndef FABA_TRACE_H
++#define FABA_TRACE_H
++
++#include <stdbool.h>
++#include <stdint.h>
++#include <stddef.h>
++
++#define FABA_TRACE_CAPACITY 128
++#define FABA_TRACE_DATA_SIZE 12
++
++enum {
++    FABA_FIELD_ON = 1, FABA_FIELD_OFF, FABA_RX,
++    FABA_TX_CRC, FABA_TX_BYTES, FABA_TX_BITS,
++    FABA_TX_DONE, FABA_ERROR, FABA_RX_RESULT, FABA_RX_ERROR,
++    FABA_TX_START, FABA_TIMING_CONFIG
++};
++
++typedef struct {
++    uint32_t cycles;
++    uint32_t rtc;
++    uint16_t bits;
++    uint8_t kind;
++    uint8_t state;
++    uint8_t data[FABA_TRACE_DATA_SIZE];
++} faba_trace_event_t;
++
++typedef struct {
++    char magic[8];
++    uint16_t version;
++    uint16_t event_size;
++    uint32_t count;
++    uint32_t dropped;
++    uint32_t cycle_hz;
++    uint32_t rtc_hz;
++    uint8_t reader; /* 0 = Faba, 1 = phone control. */
++    uint8_t slot;   /* zero based */
++    uint8_t uid_size;
++    uint8_t sak;
++    uint16_t tag_type;
++    uint8_t atqa[2];
++    uint8_t uid[10];
++    uint8_t reserved[2];
++    char firmware[24];
++} faba_trace_header_t;
++
++typedef struct {
++    faba_trace_header_t header;
++    faba_trace_event_t events[FABA_TRACE_CAPACITY];
++} faba_trace_t;
++
++/* Start with NFC sensing stopped; stop recording before deinitializing NFC.
++ * Serialize/release only after deinitialization. Single ISR producer; no
++ * allocation, file I/O or text formatting in ISR. */
++bool faba_trace_start(const faba_trace_header_t *metadata);
++void faba_trace_stop(void);
++void faba_trace_release(void);
++bool faba_trace_active(void);
++void faba_compat_set_playing(bool enabled);
++bool faba_compat_early_read(const uint8_t *data, uint16_t bits);
++void faba_trace_record(uint8_t kind, uint8_t state, const uint8_t *data, uint16_t bits);
++const faba_trace_t *faba_trace_get(void);
++const faba_trace_header_t *faba_trace_header(void);
++size_t faba_trace_size(void);
++uint32_t faba_trace_cycles(void);
++uint32_t faba_trace_rtc(void);
++void *faba_trace_alloc(size_t size);
++void faba_trace_free(void *ptr);
++
++/* Device adapter. Saved traces have unique names; failed saves retain RAM. */
++bool faba_trace_begin(uint8_t reader);
++int32_t faba_trace_save(void);
++const char *faba_trace_last_path(void);
++void faba_record_finish(void);
++void faba_trace_path_reset(void);
++bool faba_timing_start(void);
++void faba_timing_stop(void);
++void faba_timing_tx_start(uint8_t state);
++void faba_timing_tx_end(uint8_t state);
++
++#endif
+diff --git a/fw/application/src/mod/faba_trace_device.c b/fw/application/src/mod/faba_trace_device.c
+new file mode 100644
+index 0000000..1e130f5
+--- /dev/null
++++ b/fw/application/src/mod/faba_trace_device.c
+@@ -0,0 +1,53 @@
++#include "faba_trace.h"
++#include "nrf.h"
++#include "tag_helper.h"
++#include "tag_emulation.h"
++#include "vfs.h"
++#include "version2.h"
++#include "mui_mem.h"
++#include <stdio.h>
++#include <string.h>
++
++
++void *faba_trace_alloc(size_t size) {
++    mui_mem_monitor_t memory;
++    mui_mem_monitor(&memory);
++    /* Leave working space for the UI and filesystem while a capture is held. */
++    if (memory.free_biggest_size < size || memory.free_size < size + 4096) return NULL;
++    return mui_mem_malloc(size);
++}
++void faba_trace_free(void *ptr) { mui_mem_free(ptr); }
++
++uint32_t faba_trace_cycles(void) { return DWT->CYCCNT; }
++uint32_t faba_trace_rtc(void) { return NRF_RTC1->COUNTER; }
++
++bool faba_trace_begin(uint8_t reader) {
++    const nfc_tag_14a_coll_res_reference_t *identity = tag_helper_get_active_coll_res_ref();
++    uint8_t slot = tag_emulation_get_slot();
++    /* This diagnostic deliberately uses the user's existing NTAG213 slot. */
++    if (reader > 1 || !identity || !identity->size || !identity->uid ||
++        *identity->size > 10 || tag_helper_get_active_tag_type() != TAG_TYPE_NTAG_213 ||
++        !tag_emulation_slot_is_enabled(slot, TAG_SENSE_HF) || faba_trace_get()) return false;
++    faba_trace_header_t meta = {0};
++    meta.reader = reader;
++    meta.slot = slot;
++    meta.tag_type = tag_helper_get_active_tag_type();
++    meta.uid_size = *identity->size;
++    meta.sak = *identity->sak;
++    memcpy(meta.uid, identity->uid, meta.uid_size);
++    memcpy(meta.atqa, identity->atqa, 2);
++    meta.cycle_hz = 64000000;
++    meta.rtc_hz = 32768 / (NRF_RTC1->PRESCALER + 1);
++    snprintf(meta.firmware, sizeof(meta.firmware), "%s", version_get_version(version_get()));
++    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
++    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
++    if (!faba_timing_start()) return false;
++    meta.reserved[1] = 1; /* First32 + rolling last96 events. */
++    meta.reserved[0] = 1; /* PPI TIMER2 16 MHz hardware timing payloads. */
++    if (!faba_trace_start(&meta)) {
++        faba_timing_stop();
++        return false;
++    }
++    faba_trace_path_reset();
++    return true;
++}
+diff --git a/fw/application/src/mod/faba_trace_store.c b/fw/application/src/mod/faba_trace_store.c
+new file mode 100644
+index 0000000..b36b178
+--- /dev/null
++++ b/fw/application/src/mod/faba_trace_store.c
+@@ -0,0 +1,35 @@
++#include "faba_trace.h"
++#include "vfs.h"
++#include <stdio.h>
++
++static char saved_path[32];
++const char *faba_trace_last_path(void) { return saved_path; }
++void faba_trace_path_reset(void) { saved_path[0] = 0; }
++
++int32_t faba_trace_save(void) {
++    faba_trace_stop();
++    if (!faba_trace_get()) return VFS_OK;
++    vfs_driver_t *fs = vfs_get_driver(VFS_DRIVE_EXT);
++    if (!fs || !fs->mounted()) return VFS_ERR_NODEV;
++    /* KEYPAD uses SPIFFS's .folder marker. Its create_dir does not map the
++     * existing-object error, so only create the marker when it is absent. */
++    vfs_obj_t folder;
++    int32_t result = fs->stat_file("/faba/.folder", &folder);
++    if (result == VFS_ERR_NOOBJ) result = fs->create_dir("/faba");
++    if (result != VFS_OK) return result;
++    const faba_trace_t *trace = faba_trace_get();
++    char candidate[32];
++    for (unsigned i = 0; i < 100; i++) {
++        snprintf(candidate, sizeof(candidate), "/faba/%c%02u.trace", trace->header.reader ? 'P' : 'F', i);
++        vfs_obj_t info;
++        result = fs->stat_file(candidate, &info);
++        if (result == VFS_OK) continue;
++        if (result != VFS_ERR_NOOBJ) return result;
++        result = fs->write_file_data(candidate, (void *)trace, faba_trace_size());
++        if (result != (int32_t)faba_trace_size()) return result < 0 ? result : VFS_ERR_FAIL;
++        snprintf(saved_path, sizeof(saved_path), "%s", candidate);
++        faba_trace_release();
++        return VFS_OK;
++    }
++    return VFS_ERR_MAXNM;
++}
+diff --git a/fw/application/src/mod/faba_trace_timing.c b/fw/application/src/mod/faba_trace_timing.c
+new file mode 100644
+index 0000000..7a072dc
+--- /dev/null
++++ b/fw/application/src/mod/faba_trace_timing.c
+@@ -0,0 +1,78 @@
++#include "faba_trace.h"
++#include "nrf.h"
++#include "nrfx_ppi.h"
++#include "sdk_config.h"
++
++/* TIMER0 belongs to S112, TIMER1 to display PWM, TIMER3 to NFCT's workaround,
++ * TIMER4 to the alternate emulator. TIMER2 is unclaimed in this board build. */
++#if TIMER2_ENABLED || NRFX_TIMER2_ENABLED
++#error "Faba hardware capture requires exclusive TIMER2 ownership"
++#endif
++static nrf_ppi_channel_t channels[3];
++static uint8_t allocated;
++static bool running;
++static bool config_saved;
++
++void faba_timing_stop(void) {
++    /* Caller has stopped NFC sensing before releasing event connections. */
++    while (allocated) nrfx_ppi_channel_free(channels[--allocated]);
++    if (running) {
++        NRF_TIMER2->TASKS_STOP = 1;
++        NRF_TIMER2->TASKS_SHUTDOWN = 1;
++    }
++    running = false;
++}
++
++bool faba_timing_start(void) {
++    if (running || allocated) return false;
++    volatile uint32_t *events[] = { &NRF_NFCT->EVENTS_RXFRAMEEND,
++        &NRF_NFCT->EVENTS_TXFRAMESTART, &NRF_NFCT->EVENTS_TXFRAMEEND };
++    for (unsigned i = 0; i < 3; i++) {
++        if (nrfx_ppi_channel_alloc(&channels[i]) != NRFX_SUCCESS) goto fail;
++        allocated++;
++        if (nrfx_ppi_channel_assign(channels[i], (uint32_t)(uintptr_t)events[i],
++            (uint32_t)(uintptr_t)&NRF_TIMER2->TASKS_CAPTURE[i]) != NRFX_SUCCESS) goto fail;
++    }
++    NRF_TIMER2->TASKS_STOP = 1;
++    NRF_TIMER2->INTENCLR = 0xffffffff;
++    NRF_TIMER2->SHORTS = 0;
++    NRF_TIMER2->MODE = TIMER_MODE_MODE_Timer;
++    NRF_TIMER2->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
++    NRF_TIMER2->PRESCALER = 0; /* 16 MHz; 62.5 ns per tick. */
++    NRF_TIMER2->TASKS_CLEAR = 1;
++    for (unsigned i = 0; i < 4; i++) {
++        NRF_TIMER2->CC[i] = 0;
++        NRF_TIMER2->EVENTS_COMPARE[i] = 0;
++    }
++    NRF_TIMER2->TASKS_START = 1;
++    running = true;
++    config_saved = false;
++    for (unsigned i = 0; i < 3; i++) {
++        if (nrfx_ppi_channel_enable(channels[i]) != NRFX_SUCCESS) goto fail;
++    }
++    return true;
++fail:
++    faba_timing_stop();
++    return false;
++}
++
++void faba_timing_tx_start(uint8_t state) {
++    if (!running || !faba_trace_active()) return;
++    /* CC0/CC1 are latched by hardware, independent of interrupt latency. */
++    NRF_TIMER2->TASKS_CAPTURE[3] = 1;
++    uint32_t ticks[3] = { NRF_TIMER2->CC[0], NRF_TIMER2->CC[1], NRF_TIMER2->CC[3] };
++    faba_trace_record(FABA_TX_START, state, (uint8_t *)ticks, 96);
++    /* All existing TX helpers program WINDOWGRID; log the first actual config. */
++    if (!config_saved) {
++        uint32_t config[3] = { NRF_NFCT->FRAMEDELAYMIN, NRF_NFCT->FRAMEDELAYMAX,
++                              NRF_NFCT->FRAMEDELAYMODE };
++        faba_trace_record(FABA_TIMING_CONFIG, state, (uint8_t *)config, 96);
++        config_saved = true;
++    }
++}
++
++void faba_timing_tx_end(uint8_t state) {
++    if (!running || !faba_trace_active()) return;
++    uint32_t ticks[3] = { NRF_TIMER2->CC[0], NRF_TIMER2->CC[1], NRF_TIMER2->CC[2] };
++    faba_trace_record(FABA_TX_DONE, state, (uint8_t *)ticks, 96);
++}
+diff --git a/fw/application/src/mui/mlib_common.h b/fw/application/src/mui/mlib_common.h
+index 5d2a94f..921690d 100644
+--- a/fw/application/src/mui/mlib_common.h
++++ b/fw/application/src/mui/mlib_common.h
+@@ -2,6 +2,10 @@
+ #define MLIB_COMMON_H
+ 
+ #include "mui_mem.h"
++#ifdef FABA_MEMORY_DIAGNOSTICS
++#include "faba_diag.h"
++#define M_MEMORY_FULL(size) faba_diag_memory_full(__FILE__, __LINE__, (uint32_t)(size))
++#endif
+ 
+ #define M_MEMORY_ALLOC(type) mui_mem_malloc (sizeof (type))
+ #define M_MEMORY_DEL(ptr)  mui_mem_free(ptr)
+diff --git a/fw/application/src/mui/mui_core.c b/fw/application/src/mui/mui_core.c
+index 13167ff..58446b2 100644
+--- a/fw/application/src/mui/mui_core.c
++++ b/fw/application/src/mui/mui_core.c
+@@ -1,3 +1,4 @@
++#include "faba_diag.h"
+ #include "mui_core.h"
+ 
+ #include "mui_anim.h"
+@@ -97,6 +98,7 @@ static void mui_process_input(mui_t *p_mui, mui_event_t *p_event) {
+         mui_input_event_t input_event;
+         uint32_t arg = p_event->arg_int;
+ 
++        faba_diag_input(arg);
+         input_event.key = arg & 0xFF;
+         input_event.type = (arg >> 8) & 0xFF;
+ 
+diff --git a/fw/application/src/mui/mui_event.c b/fw/application/src/mui/mui_event.c
+index 22c1cab..f3185f4 100644
+--- a/fw/application/src/mui/mui_event.c
++++ b/fw/application/src/mui/mui_event.c
+@@ -1,33 +1,51 @@
+ #include "mui_event.h"
+-#include "nrf_log.h"
++#include "app_util_platform.h"
++#include "faba_diag.h"
++#include <assert.h>
+ 
+-void mui_event_queue_init(mui_event_queue_t *p_queue) {
+-    mui_event_deque_init(p_queue->event_deque);
++void mui_event_queue_init(mui_event_queue_t *q) {
++    /* One bounded allocation at UI initialization. Posting from an interrupt
++     * must never allocate from the same heap the main loop is using. */
++    q->items = mui_mem_malloc(MAX_EVENT_MSG * sizeof(*q->items));
++    assert(q->items);
++    q->head = q->count = q->pending = 0;
+ }
+-void mui_event_set_callback(mui_event_queue_t *p_queue, mui_event_handler_t dispatcher,
+-                            void *context) {
+-    p_queue->dispatch_context = context;
+-    p_queue->dispatcher = dispatcher;
++void mui_event_set_callback(mui_event_queue_t *q, mui_event_handler_t cb, void *ctx) {
++    q->dispatcher = cb; q->dispatch_context = ctx;
+ }
+-
+-void mui_event_post(mui_event_queue_t *p_queue, mui_event_t *p_event) {
+-    // CRTIAL_ENTER
+-    if (!mui_event_deque_size(p_queue->event_deque) > MAX_EVENT_MSG) {
+-        NRF_LOG_WARNING("event buffer is FULL!!");
+-        return;
++static uint8_t pending_bit(uint32_t id) {
++    return id == MUI_EVENT_ID_REDRAW ? 1 : id == MUI_EVENT_ID_ANIM ? 2 : 0;
++}
++void mui_event_post(mui_event_queue_t *q, mui_event_t *event) {
++    uint8_t bit = pending_bit(event->id);
++    CRITICAL_REGION_ENTER();
++    if (!(bit && (q->pending & bit))) {
++        if (q->count < MAX_EVENT_MSG) {
++            q->items[(q->head + q->count) % MAX_EVENT_MSG] = *event;
++            q->count++; q->pending |= bit;
++        } else {
++            faba_diag_queue_overflow();
++        }
+     }
+-    mui_event_t *p_new = mui_event_deque_push_back_new(p_queue->event_deque);
+-    memcpy(p_new, p_event, sizeof(mui_event_t));
++    CRITICAL_REGION_EXIT();
+ }
+-
+-void mui_event_dispatch(mui_event_queue_t *p_queue) {
+-    mui_event_t event;
+-    while (!mui_event_deque_empty_p(p_queue->event_deque)) {
+-        mui_event_deque_pop_front(&event, p_queue->event_deque);
+-        p_queue->dispatcher(p_queue->dispatch_context, &event);
++void mui_event_dispatch(mui_event_queue_t *q) {
++    for (;;) {
++        mui_event_t event;
++        bool have_event;
++        CRITICAL_REGION_ENTER();
++        have_event = q->count != 0;
++        if (have_event) {
++            event = q->items[q->head];
++            q->head = (q->head + 1) % MAX_EVENT_MSG;
++            q->count--; q->pending &= (uint8_t)~pending_bit(event.id);
++        }
++        CRITICAL_REGION_EXIT();
++        if (!have_event) break;
++        /* UI callbacks can post events and allocate memory; run unlocked. */
++        q->dispatcher(q->dispatch_context, &event);
+     }
+ }
+-
+-void mui_event_dispatch_now(mui_event_queue_t *p_queue, mui_event_t* p_event){
+-    p_queue->dispatcher(p_queue->dispatch_context, p_event);
+-}
+\ No newline at end of file
++void mui_event_dispatch_now(mui_event_queue_t *q, mui_event_t *event) {
++    q->dispatcher(q->dispatch_context, event);
++}
+diff --git a/fw/application/src/mui/mui_event.h b/fw/application/src/mui/mui_event.h
+index 306cdef..1f22df5 100644
+--- a/fw/application/src/mui/mui_event.h
++++ b/fw/application/src/mui/mui_event.h
+@@ -14,7 +14,7 @@ typedef struct {
+ 
+ 
+ 
+-DEQUE_DEF(mui_event_deque, mui_event_t, M_POD_OPLIST)
++
+ 
+ 
+ typedef void (*mui_event_handler_t)(void* context, mui_event_t *p_event);
+@@ -22,7 +22,9 @@ typedef void (*mui_event_handler_t)(void* context, mui_event_t *p_event);
+ typedef struct {
+     mui_event_handler_t dispatcher;
+     void* dispatch_context;
+-    mui_event_deque_t event_deque;
++    mui_event_t *items;
++    uint16_t head, count;
++    uint8_t pending;
+ } mui_event_queue_t;
+ 
+ 
+diff --git a/fw/application/src/mui/view/mui_list_view.c b/fw/application/src/mui/view/mui_list_view.c
+index 3b273aa..fcc6625 100644
+--- a/fw/application/src/mui/view/mui_list_view.c
++++ b/fw/application/src/mui/view/mui_list_view.c
+@@ -303,17 +303,11 @@ mui_list_view_t *mui_list_view_create() {
+ }
+ 
+ void mui_list_view_free(mui_list_view_t *p_view) {
+-    mui_list_item_array_it_t it;
+-
++    /* Every animation retains this view as its callback context. */
+     mui_anim_stop(&p_view->anim);
+     mui_anim_stop(&p_view->text_anim);
+-
+-    mui_list_item_array_it(it, p_view->items);
+-    while (!mui_list_item_array_end_p(it)) {
+-        mui_list_item_t *item = mui_list_item_array_ref(it);
+-        string_clear(item->text);
+-        mui_list_item_array_next(it);
+-    }
++    mui_anim_stop(&p_view->gap_anim);
++    mui_list_view_clear_items(p_view);
+     mui_list_item_array_clear(p_view->items);
+     mui_mem_free(p_view->p_view);
+     mui_mem_free(p_view);
+diff --git a/fw/application/src/sdk/pwr_mgmt/nrf_pwr_mgmt.c b/fw/application/src/sdk/pwr_mgmt/nrf_pwr_mgmt.c
+index e99b891..ec833f5 100644
+--- a/fw/application/src/sdk/pwr_mgmt/nrf_pwr_mgmt.c
++++ b/fw/application/src/sdk/pwr_mgmt/nrf_pwr_mgmt.c
+@@ -1,3 +1,4 @@
++#include "faba_diag.h"
+ /**
+  * Copyright (c) 2016 - 2021, Nordic Semiconductor ASA
+  *
+@@ -443,6 +444,7 @@ static void shutdown_process(void)
+     if ((m_pwr_mgmt_evt == NRF_PWR_MGMT_EVT_PREPARE_RESET)
+      || (m_pwr_mgmt_evt == NRF_PWR_MGMT_EVT_PREPARE_DFU))
+     {
++        faba_diag_fault(0xF0000005u, 0, m_pwr_mgmt_evt);
+         NVIC_SystemReset();
+     }
+     else
+diff --git a/fw/application/src/utils.c b/fw/application/src/utils.c
+index 60f292b..91ea79d 100644
+--- a/fw/application/src/utils.c
++++ b/fw/application/src/utils.c
+@@ -1,3 +1,4 @@
++#include "faba_diag.h"
+ /*
+  * utils.c
+  *
+@@ -36,11 +37,12 @@ void int32_to_bytes_le(uint32_t val, uint8_t *data) {
+ }
+ 
+ void enter_dfu() {
++    faba_diag_fault(0xF0000003u, (uint32_t)__builtin_return_address(0), 0);
+     sd_power_gpregret_clr(0, 0);
+     sd_power_gpregret_set(0, BOOTLOADER_DFU_START);
+     sd_nvic_SystemReset();
+ }
+ 
+-void system_reboot() { sd_nvic_SystemReset(); }
++void system_reboot() { faba_diag_fault(0xF0000004u, (uint32_t)__builtin_return_address(0), 0); sd_nvic_SystemReset(); }
+ 
+ void go_sleep() { nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_GOTO_SYSOFF); }
+diff --git a/fw/ld/application.ld b/fw/ld/application.ld
+index 4ef69e3..6c9e434 100644
+--- a/fw/ld/application.ld
++++ b/fw/ld/application.ld
+@@ -142,4 +142,5 @@ SECTIONS
+     KEEP(*(*.noinit*))
+     PROVIDE(__stop_noinit = .);
+   } > NOINIT
++  .faba_diag (NOLOAD): { KEEP(*(.faba_diag)) } > NOINIT
+ }
+diff --git a/fw/application/src/app/chameleon/scene/chameleon_scene_faba_catalog.c b/fw/application/src/app/chameleon/scene/chameleon_scene_faba_catalog.c
+new file mode 100644
+index 0000000..219c131
+--- /dev/null
++++ b/fw/application/src/app/chameleon/scene/chameleon_scene_faba_catalog.c
+@@ -0,0 +1,197 @@
++#include "app_chameleon.h"
++#include "chameleon_scene.h"
++#include "faba_catalog_data.h"
++#include "faba_player.h"
++#include "faba_favorites.h"
++#include "tag_emulation.h"
++#include "hal_nfc_t2t.h"
++#include "mini_app_launcher.h"
++#include "mui_icons.h"
++#include "mui_mem.h"
++#include "vfs.h"
++#include <stdio.h>
++#include <string.h>
++
++#define PAGE_SIZE 10
++#define ACTION_BACK 10000
++#define ACTION_NEXT 10001
++#define ACTION_PREV 10002
++#define ACTION_DIAGNOSTICS 10003
++#define ACTION_NONE 10004
++#define FAVORITES_GROUP FABA_CATALOG_GROUP_COUNT
++
++typedef struct {
++    unsigned group, page, total;
++    faba_favorites_t favorites;
++    uint16_t id, focus;
++    char title[FABA_CATALOG_RECORD_SIZE - 2];
++} catalog_state_t;
++static catalog_state_t *catalog;
++
++void faba_catalog_close(void) {
++    if (catalog) mui_mem_free(catalog);
++    catalog = NULL;
++}
++static void show_list(app_chameleon_t *app, mui_list_view_selected_cb cb) {
++    mui_list_view_set_selected_cb(app->p_list_view, cb);
++    mui_view_dispatcher_switch_to_view(app->p_view_dispatcher, CHAMELEON_VIEW_ID_LIST);
++}
++static void back(app_chameleon_t *app) {
++    if (mui_scene_dispatcher_is_at_root(app->p_scene_dispatcher)) mini_app_launcher_exit(mini_app_launcher());
++    else mui_scene_dispatcher_previous_scene(app->p_scene_dispatcher);
++}
++static void catalog_select(mui_list_view_event_t event, mui_list_view_t *view, mui_list_item_t *item) {
++    app_chameleon_t *app = view->user_data;
++    uintptr_t action = (uintptr_t)item->user_data;
++    if (action == ACTION_BACK) back(app);
++    else if (action == ACTION_DIAGNOSTICS)
++        mui_scene_dispatcher_next_scene(app->p_scene_dispatcher, CHAMELEON_SCENE_FABA);
++    else if (catalog && action <= FAVORITES_GROUP) {
++        catalog->group = action; catalog->page = 0; catalog->focus = 0;
++        mui_scene_dispatcher_next_scene(app->p_scene_dispatcher, CHAMELEON_SCENE_FABA_TITLES);
++    }
++}
++void chameleon_scene_faba_catalog_on_enter(void *user_data) {
++    app_chameleon_t *app = user_data;
++    tag_emulation_sense_end(); hal_nfc_set_nrfx_irq_enable(false);
++    if (!catalog) {
++        mui_mem_monitor_t mem; mui_mem_monitor(&mem);
++        if (mem.free_biggest_size >= sizeof(*catalog) && mem.free_size > 4096)
++            catalog = mui_mem_malloc(sizeof(*catalog));
++        if (catalog) {
++            memset(catalog, 0, sizeof(*catalog));
++            if (faba_favorites_load(&catalog->favorites) != VFS_OK)
++                mui_toast_view_show(app->p_toast_view, "No se pudieron cargar preferidos");
++        }
++    }
++    if (catalog) {
++        char detail[24];snprintf(detail,sizeof(detail),"%u títulos",catalog->favorites.count);
++        mui_list_view_add_item_ext(app->p_list_view,ICON_FAVORITE,"Preferidos",detail,(void *)FAVORITES_GROUP);
++    }
++    if (catalog) for (unsigned i = 0; i < FABA_CATALOG_GROUP_COUNT; i++) {
++        char detail[24]; snprintf(detail, sizeof(detail), "%u titles", faba_groups[i].count);
++        mui_list_view_add_item_ext(app->p_list_view, ICON_FOLDER, faba_groups[i].name, detail, (void *)(uintptr_t)i);
++    }
++    else mui_toast_view_show(app->p_toast_view, "Not enough memory; reopen Faba");
++    mui_list_view_add_item(app->p_list_view, ICON_SETTINGS, "Diagnostics", (void *)ACTION_DIAGNOSTICS);
++    mui_list_view_add_item(app->p_list_view, ICON_HOME, "Main menu", (void *)ACTION_BACK);
++    show_list(app, catalog_select);
++}
++void chameleon_scene_faba_catalog_on_exit(void *user_data) {
++    mui_list_view_clear_items(((app_chameleon_t *)user_data)->p_list_view);
++}
++
++/* Fixed-size records allow bounded RAM use. VFS has no seek, so skip complete
++ * records sequentially; only ten titles are allocated in the list at a time. */
++static bool load_page(app_chameleon_t *app) {
++    char path[32]; uint8_t record[FABA_CATALOG_RECORD_SIZE];
++    vfs_driver_t *fs = vfs_get_driver(VFS_DRIVE_EXT);
++    if (!fs || !fs->mounted()) return false;
++    bool favorites=catalog->group==FAVORITES_GROUP;
++    if(favorites&&!catalog->favorites.available)return false;
++    unsigned first=catalog->page*PAGE_SIZE, seen=0;
++    unsigned begin=favorites?0:catalog->group, end=favorites?FABA_CATALOG_GROUP_COUNT:begin+1;
++    for(unsigned group=begin;group<end;group++) {
++        snprintf(path,sizeof(path),"/faba/cat%u.bin",group);
++        vfs_obj_t info;unsigned count=faba_groups[group].count;
++        if(fs->stat_file(path,&info)!=VFS_OK||info.size!=16+count*sizeof(record))return false;
++        vfs_file_t file;
++        if(fs->open_file(path,&file,VFS_MODE_READONLY)!=VFS_OK)return false;
++        bool ok=fs->read_file(&file,record,16)==16&&!memcmp(record,"FABACAT1",8)&&
++            record[8]==group&&record[9]==0&&(unsigned)(record[10]|record[11]<<8)==count&&
++            record[12]==sizeof(record)&&record[13]==0&&record[14]==0&&record[15]==0;
++        for(unsigned i=0;ok&&i<count;i++) {
++            ok=fs->read_file(&file,record,sizeof(record))==sizeof(record);
++            if(!ok)break;
++            unsigned id=record[0]|record[1]<<8;
++            ok=id>0&&id<=9999&&record[2]&&memchr(record+2,0,sizeof(record)-2);
++            if(!ok)break;
++            bool starred=faba_favorites_has(&catalog->favorites,id);
++            if(favorites&&!starred)continue;
++            if(seen>=first&&seen<first+PAGE_SIZE) {
++                char detail[32];snprintf(detail,sizeof(detail),"%s %04u",favorites?faba_groups[group].name:"Faba",id);
++                mui_list_view_add_item_ext(app->p_list_view,starred?ICON_FAVORITE:ICON_FILE,(char *)record+2,detail,(void *)(uintptr_t)id);
++            }
++            seen++;
++        }
++        int32_t closed=fs->close_file(&file);
++        if(!ok||closed!=VFS_OK)return false;
++    }
++    catalog->total=seen;
++    return true;
++}
++void chameleon_scene_faba_titles_on_enter(void *user_data);
++static void titles_select(mui_list_view_event_t event, mui_list_view_t *view, mui_list_item_t *item) {
++    app_chameleon_t *app = view->user_data;
++    uintptr_t action = (uintptr_t)item->user_data;
++    if (event == MUI_LIST_VIEW_EVENT_LONG_SELECTED && action > 0 && action < ACTION_BACK) {
++        bool was=faba_favorites_has(&catalog->favorites,action);
++        catalog->focus=mui_list_view_get_focus(view);
++        if(faba_favorites_toggle(&catalog->favorites,action)!=VFS_OK) {
++            mui_toast_view_show(app->p_toast_view,"No se pudo guardar preferidos");return;
++        }
++        if(catalog->group==FAVORITES_GROUP) {
++            unsigned last=catalog->favorites.count?(catalog->favorites.count-1)/PAGE_SIZE:0;
++            if(catalog->page>last)catalog->page=last;
++        }
++        mui_list_view_clear_items(view);chameleon_scene_faba_titles_on_enter(app);
++        mui_toast_view_show(app->p_toast_view,was?"Quitado de preferidos":"Añadido a preferidos");
++        return;
++    }
++    if(event != MUI_LIST_VIEW_EVENT_SELECTED)return;
++    if (action == ACTION_BACK) back(app);
++    else if (action == ACTION_NEXT || action == ACTION_PREV) {
++        if (action == ACTION_NEXT) catalog->page++; else if (catalog->page) catalog->page--;
++        catalog->focus = 0;
++        mui_list_view_clear_items(view);
++        chameleon_scene_faba_titles_on_enter(app);
++    } else if (action > 0 && action < ACTION_BACK) {
++        catalog->id = action;
++        catalog->focus = mui_list_view_get_focus(view);
++        snprintf(catalog->title, sizeof(catalog->title), "%s", string_get_cstr(item->text));
++        mui_scene_dispatcher_next_scene(app->p_scene_dispatcher, CHAMELEON_SCENE_FABA_PLAY);
++    }
++}
++void chameleon_scene_faba_titles_on_enter(void *user_data) {
++    app_chameleon_t *app = user_data;
++    if (!load_page(app)) {
++        mui_list_view_clear_items(app->p_list_view);
++        mui_toast_view_show(app->p_toast_view, catalog->group==FAVORITES_GROUP&&!catalog->favorites.available ? "Preferidos no disponibles" : "Install Faba catalog files via BLE");
++    } else {
++        char label[32];
++        if(catalog->group==FAVORITES_GROUP&&!catalog->total)
++            mui_list_view_add_item(app->p_list_view,ICON_FAVORITE,"Sin preferidos",(void *)ACTION_NONE);
++        if ((catalog->page + 1) * PAGE_SIZE < catalog->total) {
++            snprintf(label, sizeof(label), "Next page (%u/%u)", catalog->page + 1,
++                (catalog->total + PAGE_SIZE - 1) / PAGE_SIZE);
++            mui_list_view_add_item(app->p_list_view, ICON_FOLDER, label, (void *)ACTION_NEXT);
++        }
++        if (catalog->page) mui_list_view_add_item(app->p_list_view, ICON_BACK, "Previous page", (void *)ACTION_PREV);
++    }
++    mui_list_view_add_item(app->p_list_view,ICON_FAVORITE,"Mantén OK: preferidos",(void *)ACTION_NONE);
++    mui_list_view_add_item(app->p_list_view, ICON_BACK, "Languages", (void *)ACTION_BACK);
++    show_list(app, titles_select);
++    mui_list_view_set_focus(app->p_list_view, catalog->focus < mui_list_view_item_size(app->p_list_view) ? catalog->focus : 0);
++}
++void chameleon_scene_faba_titles_on_exit(void *user_data) {
++    mui_list_view_clear_items(((app_chameleon_t *)user_data)->p_list_view);
++}
++static void play_select(mui_list_view_event_t event, mui_list_view_t *view, mui_list_item_t *item) {
++    if ((uintptr_t)item->user_data == ACTION_BACK) back(view->user_data);
++}
++void chameleon_scene_faba_play_on_enter(void *user_data) {
++    app_chameleon_t *app = user_data;
++    char detail[24]; snprintf(detail, sizeof(detail), "Faba %04u / Ready", catalog->id);
++    mui_list_view_add_item_ext(app->p_list_view, ICON_VIEW, catalog->title, detail, NULL);
++    mui_list_view_add_item(app->p_list_view, ICON_VIEW, "Keep close to Faba", NULL);
++    mui_list_view_add_item(app->p_list_view, ICON_BACK, "Stop and return", (void *)ACTION_BACK);
++    show_list(app, play_select);
++    if (!faba_player_start(catalog->id)) {
++        mui_scene_dispatcher_previous_scene(app->p_scene_dispatcher);
++        mui_toast_view_show(app->p_toast_view, "Cannot start; save trace or reopen Faba");
++    }
++}
++void chameleon_scene_faba_play_on_exit(void *user_data) {
++    faba_player_stop();
++    mui_list_view_clear_items(((app_chameleon_t *)user_data)->p_list_view);
++}
+diff --git a/fw/application/src/mod/faba_catalog_data.h b/fw/application/src/mod/faba_catalog_data.h
+new file mode 100644
+index 0000000..ceabcbd
+--- /dev/null
++++ b/fw/application/src/mod/faba_catalog_data.h
+@@ -0,0 +1,12 @@
++/* Generated by tools/generate-faba-catalog.py. */
++#define FABA_CATALOG_RECORD_SIZE 160
++#define FABA_CATALOG_GROUP_COUNT 7
++static const struct { const char *name; unsigned short count; } faba_groups[] = {
++    {"Español", 48},
++    {"Català", 4},
++    {"Français", 69},
++    {"Italiano", 129},
++    {"Italiano / English", 1},
++    {"Español (Latam)", 3},
++    {"Neutral", 3},
++};
+diff --git a/fw/application/src/mod/faba_diag.c b/fw/application/src/mod/faba_diag.c
+new file mode 100644
+index 0000000..63934e4
+--- /dev/null
++++ b/fw/application/src/mod/faba_diag.c
+@@ -0,0 +1,62 @@
++#include <stdlib.h>
++#include "faba_diag.h"
++#include "app_timer.h"
++#include "mui_mem.h"
++#include <string.h>
++#define DIAG_MAGIC 0x37444246u
++/* Separate from cache_clean's region and from the normal UI heap. */
++static volatile faba_diag_t report __attribute__((section(".faba_diag")));
++_Static_assert(sizeof(faba_diag_t) == 64, "Diagnostic wire format and RAM budget");
++static int live(void) { return report.magic == DIAG_MAGIC && report.story && !(report.flags & 1); }
++void faba_diag_boot(uint32_t reset_reason) {
++    if (report.magic != DIAG_MAGIC) {
++        memset((void *)&report, 0, sizeof(report));
++        report.magic = DIAG_MAGIC;
++    } else if (report.story) report.flags |= 1; /* Report belongs to previous boot. */
++    report.reset_reason = reset_reason;
++}
++void faba_diag_begin(uint16_t story) {
++    uint32_t reset_reason = report.reset_reason;
++    memset((void *)&report, 0, sizeof(report));
++    report.magic = DIAG_MAGIC; report.reset_reason = reset_reason;
++    report.story = story; report.phase = 1; report.start_tick = app_timer_cnt_get();
++    mui_mem_monitor_t mem; mui_mem_monitor(&mem);
++    report.free_start = mem.free_size; report.biggest_start = mem.free_biggest_size;
++}
++void faba_diag_phase(uint32_t phase) {
++    if (!live()) return;
++    report.phase = phase; report.end_tick = app_timer_cnt_get();
++    if (phase >= 3) {
++        mui_mem_monitor_t mem; mui_mem_monitor(&mem); report.free_stop = mem.free_size;
++    }
++}
++void faba_diag_input(uint32_t input) {
++    /* Keep recording navigation through the app exit, then freeze for BLE. */
++    if (!live() || (report.flags & 2)) return;
++    report.last_input = input; report.input_tick = app_timer_cnt_get(); report.input_count++;
++}
++void faba_diag_kill(uint32_t app_id) {
++    if (app_id == 10 && live()) { report.flags |= 2; report.end_tick = app_timer_cnt_get(); }
++}
++void faba_diag_fault(uint32_t id, uint32_t pc, uint32_t info) {
++    /* Fault path: no allocation, timers, flash or potentially corrupt heap walks. */
++    if (!live() || (report.flags & 4)) return;
++    report.fault_id = id; report.fault_pc = pc; report.fault_info = info; report.flags |= 4;
++}
++void faba_diag_queue_overflow(void) {
++    if (live() && report.phase == 2 && !(report.flags & 4)) {
++        report.flags |= 32; report.free_stop++;
++    }
++}
++void faba_diag_memory_full(const char *file, uint32_t line, uint32_t size) {
++    faba_diag_fault(0xF0000006u, (uint32_t)(uintptr_t)file, size);
++    faba_diag_location(line);
++    abort();
++}
++void faba_diag_cpu_status(uint32_t cfsr) {
++    if (live()) { report.free_stop = cfsr; report.flags |= 16; }
++}
++void faba_diag_location(uint32_t line) {
++    if (live()) { report.phase = (report.phase & 255) | (line << 8); report.flags |= 8; }
++}
++const volatile faba_diag_t *faba_diag_report(void) { return &report; }
+diff --git a/fw/application/src/mod/faba_diag.h b/fw/application/src/mod/faba_diag.h
+new file mode 100644
+index 0000000..cf10d1e
+--- /dev/null
++++ b/fw/application/src/mod/faba_diag.h
+@@ -0,0 +1,22 @@
++#ifndef FABA_DIAG_H
++#define FABA_DIAG_H
++#include <stdint.h>
++/* Read-only BLE command 03 returns these 16 little-endian words. The dedicated
++ * NOLOAD region survives software reset; power removal may erase the report. */
++typedef struct {
++    uint32_t magic, flags, reset_reason, phase, story, start_tick, end_tick;
++    uint32_t last_input, input_tick, input_count, free_start, biggest_start;
++    uint32_t free_stop, fault_id, fault_pc, fault_info;
++} faba_diag_t;
++void faba_diag_boot(uint32_t reset_reason);
++void faba_diag_begin(uint16_t story);
++void faba_diag_phase(uint32_t phase);
++void faba_diag_input(uint32_t input);
++void faba_diag_kill(uint32_t app_id);
++void faba_diag_queue_overflow(void);
++void faba_diag_memory_full(const char *file, uint32_t line, uint32_t size);
++void faba_diag_cpu_status(uint32_t cfsr);
++void faba_diag_location(uint32_t line);
++void faba_diag_fault(uint32_t id, uint32_t pc, uint32_t info);
++const volatile faba_diag_t *faba_diag_report(void);
++#endif
+diff --git a/fw/application/src/mod/faba_favorites.c b/fw/application/src/mod/faba_favorites.c
+new file mode 100644
+index 0000000..0dc0d3a
+--- /dev/null
++++ b/fw/application/src/mod/faba_favorites.c
+@@ -0,0 +1,89 @@
++#include "faba_favorites.h"
++#include "vfs.h"
++#include <string.h>
++#define PACKET_SIZE (14 + 2 * FABA_FAVORITES_MAX)
++#define CHECKSUM_OFFSET (PACKET_SIZE - 4)
++static const char *const paths[] = {"/faba/pref0.bin", "/faba/pref1.bin"};
++static uint32_t get32(const uint8_t *p) { return p[0] | (uint32_t)p[1]<<8 | (uint32_t)p[2]<<16 | (uint32_t)p[3]<<24; }
++static void put32(uint8_t *p,uint32_t v) { for(unsigned i=0;i<4;i++)p[i]=(uint8_t)(v>>(8*i)); }
++static uint32_t checksum(const uint8_t *p) {
++    uint32_t hash=2166136261u;
++    for(unsigned i=0;i<CHECKSUM_OFFSET;i++)hash=(hash^p[i])*16777619u;
++    return hash;
++}
++static int32_t read_bank(vfs_driver_t *fs,unsigned bank,uint8_t *bytes) {
++    vfs_obj_t info;
++    int32_t result=fs->stat_file(paths[bank],&info);
++    if(result!=VFS_OK)return result;
++    if(info.size!=PACKET_SIZE)return VFS_ERR_CRPT;
++    vfs_file_t file;
++    result=fs->open_file(paths[bank],&file,VFS_MODE_READONLY);
++    if(result!=VFS_OK)return result;
++    result=fs->read_file(&file,bytes,PACKET_SIZE);
++    int32_t closed=fs->close_file(&file);
++    if(result!=PACKET_SIZE||closed!=VFS_OK)return VFS_ERR_FAIL;
++    unsigned count=bytes[8]|(unsigned)bytes[9]<<8;
++    if(memcmp(bytes,"FBP1",4)||count>FABA_FAVORITES_MAX||get32(bytes+CHECKSUM_OFFSET)!=checksum(bytes))return VFS_ERR_CRPT;
++    unsigned previous=0;
++    for(unsigned i=0;i<count;i++) {
++        unsigned id=bytes[10+2*i]|(unsigned)bytes[11+2*i]<<8;
++        if(id<=previous||id>9999)return VFS_ERR_CRPT;
++        previous=id;
++    }
++    return VFS_OK;
++}
++int32_t faba_favorites_load(faba_favorites_t *state) {
++    memset(state,0,sizeof(*state));state->bank=-1;
++    vfs_driver_t *fs=vfs_get_driver(VFS_DRIVE_EXT);
++    if(!fs||!fs->mounted())return VFS_ERR_NODEV;
++    uint8_t bytes[PACKET_SIZE];
++    int32_t failure=VFS_OK;
++    for(unsigned bank=0;bank<2;bank++) {
++        int32_t result=read_bank(fs,bank,bytes);
++        if(result==VFS_ERR_NOOBJ)continue;
++        if(result!=VFS_OK){failure=result;continue;}
++        uint32_t generation=get32(bytes+4);
++        if(state->bank>=0&&(int32_t)(generation-state->generation)<=0)continue;
++        state->bank=(int8_t)bank;state->generation=generation;
++        state->count=bytes[8]|(unsigned)bytes[9]<<8;
++        for(unsigned i=0;i<state->count;i++)state->ids[i]=bytes[10+2*i]|(unsigned)bytes[11+2*i]<<8;
++    }
++    state->available=state->bank>=0||failure==VFS_OK;
++    return state->available?VFS_OK:failure;
++}
++bool faba_favorites_has(const faba_favorites_t *state,uint16_t id) {
++    for(unsigned i=0;i<state->count;i++)if(state->ids[i]==id)return true;
++    return false;
++}
++int32_t faba_favorites_toggle(faba_favorites_t *state,uint16_t id) {
++    if(!state->available)return VFS_ERR_CRPT;
++    if(!id||id>9999)return VFS_ERR_FAIL;
++    faba_favorites_t next=*state;
++    unsigned pos=0;
++    while(pos<next.count&&next.ids[pos]<id)pos++;
++    if(pos<next.count&&next.ids[pos]==id) {
++        memmove(next.ids+pos,next.ids+pos+1,(next.count-pos-1)*sizeof(uint16_t));next.count--;
++    } else {
++        if(next.count==FABA_FAVORITES_MAX)return VFS_ERR_NOSPC;
++        memmove(next.ids+pos+1,next.ids+pos,(next.count-pos)*sizeof(uint16_t));next.ids[pos]=id;next.count++;
++    }
++    next.generation++;next.bank=state->bank==0?1:0;
++    uint8_t bytes[PACKET_SIZE]={0};memcpy(bytes,"FBP1",4);put32(bytes+4,next.generation);
++    bytes[8]=next.count;bytes[9]=next.count>>8;
++    for(unsigned i=0;i<next.count;i++){bytes[10+2*i]=next.ids[i];bytes[11+2*i]=next.ids[i]>>8;}
++    put32(bytes+CHECKSUM_OFFSET,checksum(bytes));
++    vfs_driver_t *fs=vfs_get_driver(VFS_DRIVE_EXT);
++    if(!fs||!fs->mounted())return VFS_ERR_NODEV;
++    /* Write the inactive copy; a partial write never destroys the active copy. */
++    vfs_file_t file;
++    int32_t result=fs->open_file(paths[next.bank],&file,VFS_MODE_CREATE|VFS_MODE_TRUNC|VFS_MODE_WRITEONLY);
++    if(result!=VFS_OK)return result;
++    result=fs->write_file(&file,bytes,sizeof(bytes));
++    int32_t closed=fs->close_file(&file);
++    if(result!=sizeof(bytes)||closed!=VFS_OK)return VFS_ERR_FAIL;
++    uint8_t verify[PACKET_SIZE];
++    result=read_bank(fs,next.bank,verify);
++    if(result!=VFS_OK||memcmp(bytes,verify,sizeof(bytes)))return VFS_ERR_FAIL;
++    *state=next;
++    return VFS_OK;
++}
+diff --git a/fw/application/src/mod/faba_favorites.h b/fw/application/src/mod/faba_favorites.h
+new file mode 100644
+index 0000000..6fc1e58
+--- /dev/null
++++ b/fw/application/src/mod/faba_favorites.h
+@@ -0,0 +1,16 @@
++#ifndef FABA_FAVORITES_H
++#define FABA_FAVORITES_H
++#include <stdint.h>
++#include <stdbool.h>
++#define FABA_FAVORITES_MAX 257
++/* IDs, not titles or tag images. Allocated with the catalog's bounded state. */
++typedef struct {
++    uint32_t generation;
++    uint16_t count, ids[FABA_FAVORITES_MAX];
++    int8_t bank;
++    bool available;
++} faba_favorites_t;
++int32_t faba_favorites_load(faba_favorites_t *state);
++bool faba_favorites_has(const faba_favorites_t *state, uint16_t id);
++int32_t faba_favorites_toggle(faba_favorites_t *state, uint16_t id);
++#endif
+diff --git a/fw/application/src/mod/faba_icon.h b/fw/application/src/mod/faba_icon.h
+new file mode 100644
+index 0000000..7efff68
+--- /dev/null
++++ b/fw/application/src/mod/faba_icon.h
+@@ -0,0 +1,16 @@
++// Compiled from the official FABA favicon; provenance in assets/faba/source.json.
++#ifndef FABA_ICON_H
++#define FABA_ICON_H
++#include "mui_resource.h"
++static const uint8_t faba_icon_data[] = {
++    0x00,0xe0,0x0f,0x00,0x00,0xfc,0x7f,0x00,0x00,0xff,0xff,0x00,0xc0,0xff,0xff,0x03,
++    0xe0,0xff,0xff,0x07,0xf0,0xff,0xff,0x0f,0xf8,0xff,0xff,0x1f,0xf8,0xff,0xff,0x1f,
++    0xfc,0xff,0xff,0x3f,0xfe,0xff,0xff,0x3f,0xfe,0xff,0xff,0x7f,0xfe,0xff,0xff,0x7f,
++    0x0f,0xe3,0xf0,0xf8,0x07,0x63,0x60,0xf8,0xc7,0x61,0x64,0xf8,0x07,0x41,0x60,0xf8,
++    0x07,0x49,0x60,0xf0,0xc7,0x41,0x04,0xf0,0xc7,0x00,0x00,0xf0,0xcf,0x9c,0x20,0xf3,
++    0xfe,0xff,0xff,0x7f,0xfe,0xff,0xff,0x7f,0xfc,0xff,0xff,0x7f,0xfc,0xff,0xff,0x3f,
++    0xf8,0xff,0xff,0x1f,0xf8,0xff,0xff,0x1f,0xf0,0xff,0xff,0x0f,0xe0,0xff,0xff,0x07,
++    0xc0,0xff,0xff,0x03,0x00,0xff,0xff,0x00,0x00,0xfe,0x3f,0x00,0x00,0xe0,0x07,0x00,
++};
++static const xbm_t app_faba_32x32 = {32, 32, faba_icon_data};
++#endif
+diff --git a/fw/application/src/mod/faba_player.c b/fw/application/src/mod/faba_player.c
+new file mode 100644
+index 0000000..4bd3c1d
+--- /dev/null
++++ b/fw/application/src/mod/faba_player.c
+@@ -0,0 +1,62 @@
++#include "faba_diag.h"
++#include "faba_player.h"
++#include "faba_trace.h"
++#include "faba_player_template.h"
++#include "tag_helper.h"
++#include "tag_emulation.h"
++#include "nfc_mf0_ntag.h"
++#include "hal_nfc_t2t.h"
++#include "nrf_pwr_mgmt.h"
++#include "mui_mem.h"
++#include <stddef.h>
++#include <string.h>
++
++static uint8_t *player_data;
++static uint16_t previous_timeout;
++_Static_assert(offsetof(nfc_tag_mf0_ntag_information_t, memory) == 273, "NTAG template ABI");
++_Static_assert(sizeof(faba_player_template) == 497, "NTAG213 profile size");
++
++bool faba_player_start(uint16_t id) {
++    if (player_data || faba_trace_active() || id > 9999) return false;
++    faba_diag_begin(id);
++    mui_mem_monitor_t memory;
++    mui_mem_monitor(&memory);
++    if (memory.free_biggest_size < sizeof(faba_player_template) || memory.free_size < 4096) return false;
++    player_data = mui_mem_malloc(sizeof(faba_player_template));
++    if (!player_data) return false;
++    memcpy(player_data, faba_player_template, sizeof(faba_player_template));
++    /* Preserve the working sticker's TLVs, language, UID and configuration.
++     * This private buffer is never passed to the slot persistence layer. */
++    for (int i = 3; i >= 0; i--) { player_data[273 + 38 + i] = '0' + id % 10; id /= 10; }
++    tag_emulation_sense_end();
++    hal_nfc_set_nrfx_irq_enable(false);
++    if (!faba_timing_start()) { mui_mem_free(player_data); player_data = NULL; return false; }
++    tag_data_buffer_t buffer = { .length = sizeof(faba_player_template), .buffer = player_data, .crc = NULL };
++    nfc_tag_mf0_ntag_data_loadcb(TAG_TYPE_NTAG_213, &buffer);
++    previous_timeout = nrf_pwr_mgmt_get_timeout();
++    nrf_pwr_mgmt_set_timeout(0);
++    faba_diag_phase(2);
++    faba_compat_set_playing(true);
++    hal_nfc_set_nrfx_irq_enable(true);
++    /* The catalog owns its NTAG213 context, independent of the active slot. */
++    nfc_tag_14a_sense_switch(true);
++    return true;
++}
++
++void faba_player_stop(void) {
++    if (!player_data) return;
++    faba_compat_set_playing(false);
++    nfc_tag_14a_sense_switch(false);
++    hal_nfc_set_nrfx_irq_enable(false);
++    faba_timing_stop();
++    faba_diag_phase(3);
++    nfc_tag_14a_handler_t empty = {0};
++    nfc_tag_14a_set_handler(&empty);
++    /* Restore the saved slot's handler before any app-exit save can run. */
++    tag_specific_type_t type = tag_helper_get_active_tag_type();
++    if (get_buffer_by_tag_type(type)) tag_emulation_load_by_buffer(type, false);
++    mui_mem_free(player_data);
++    player_data = NULL;
++    nrf_pwr_mgmt_feed();
++    nrf_pwr_mgmt_set_timeout(previous_timeout);
++}
+diff --git a/fw/application/src/mod/faba_player.h b/fw/application/src/mod/faba_player.h
+new file mode 100644
+index 0000000..07d6a8b
+--- /dev/null
++++ b/fw/application/src/mod/faba_player.h
+@@ -0,0 +1,8 @@
++#ifndef FABA_PLAYER_H
++#define FABA_PLAYER_H
++#include <stdbool.h>
++#include <stdint.h>
++bool faba_player_start(uint16_t id);
++void faba_player_stop(void);
++void faba_catalog_close(void);
++#endif
+diff --git a/fw/application/src/mod/faba_player_template.h b/fw/application/src/mod/faba_player_template.h
+new file mode 100644
+index 0000000..2746bc8
+--- /dev/null
++++ b/fw/application/src/mod/faba_player_template.h
+@@ -0,0 +1,35 @@
++/* Captured working NTAG213 profile; private player RAM only. */
++static const uint8_t faba_player_template[] = {
++    0x07,0x44,0x00,0x00,0x04,0xe7,0xdd,0x17,0xbc,0x2a,0x81,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x04,0xe7,0xdd,0xb6,0x17,0xbc,0x2a,0x81,0x00,0x48,0x00,0x00,0xe1,0x10,0x12,
++    0x00,0x01,0x03,0xa0,0x0c,0x34,0x03,0x15,0xd1,0x01,0x11,0x54,0x02,0x65,0x6e,0x30,
++    0x32,0x31,0x39,0x30,0x35,0x33,0x30,0x30,0x34,0x34,0x33,0x30,0x30,0xfe,0x00,0x00,
++    0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0xbd,0x04,0x00,0x00,0xff,0x10,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x50,0x00,0x00,0x04,0x04,0x02,0x01,0x00,0x0f,
++    0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
++    0x00,
++};

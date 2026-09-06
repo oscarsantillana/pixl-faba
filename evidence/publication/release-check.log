@@ -1,0 +1,13 @@
+{
+  "application_version": 21601,
+  "hardware_version": 52,
+  "softdevice": "0x0103",
+  "application_bytes": 369540,
+  "application_sha256": "1f1ec85c957a8af8b119d8c21b538c37d364a32ca5cdd706cb5b33e3cf232e0f",
+  "zip_sha256": "abc0ddd43b30b7ce89cea4ae8c4054bd5548a3a9222049c6ffe1f3e73d7b5270",
+  "contents": "application only",
+  "expected_display_version": "2.16.1-faba10",
+  "signature": "pending separate CryptoKit verification"
+}
+PASS: release checksums, all catalogue files, Nordic metadata, binary and signature-evidence equality.
+For cryptographic verification, run .build/bin/verify-faba-signature evidence/faba10 after Mac setup.

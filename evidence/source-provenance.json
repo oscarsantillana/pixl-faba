@@ -1,0 +1,16 @@
+{
+  "release": "2.16.1-faba10",
+  "firmware": {
+    "repository": "https://github.com/solosky/pixl.js",
+    "commit": "7a07ab957743d04850d86b55089ea4894ab8fef5"
+  },
+  "submodules": [
+    " ffb0ccbce9b956ee7ee0afc8329bd588ff37b85c fw/components/chameleon-ultra (ffb0ccb)",
+    " 08e7520d332b700392248227bc07a68c429dc2bf fw/components/cwalk (08e7520)",
+    " c733d9ec5776dfc949ec6dc71fa9ce3ff71de6e5 fw/components/littlefs (c733d9e)",
+    " 85473610a41482586ad7e58622995312b361e027 fw/components/mlib (8547361)",
+    " 0e3104cde5db4b9d4db579296b44761930ef7501 fw/components/spiffs (0e3104c)",
+    " deff9ab509341f264addbd3c8ada533678591905 fw/components/tlsf (heads/master)"
+  ],
+  "snapshot": "Tracked working-tree files plus new application sources; dependencies vendored. Private key files and upstream CI workflows excluded. Exact archived release patches included."
+}

@@ -1,0 +1,320 @@
+PASS: all 257 titles and IDs, 7 language groups, page boundaries, corrupt headers, truncated files, failed reads, invalid IDs, unterminated titles
+PASS: all 257 NDEF IDs, private data isolation, saved-slot restoration, power/IRQ/timer cleanup, repeated stop and start, invalid IDs and failure paths
+Cycle 0: live=1889 allocations=6 starts=88
+Cycle 1: live=1889 allocations=6 starts=175
+Cycle 2: live=1889 allocations=6 starts=262
+Cycle 3: live=1889 allocations=6 starts=349
+Cycle 4: live=1889 allocations=6 starts=436
+Cycle 5: live=1889 allocations=6 starts=523
+Cycle 6: live=1889 allocations=6 starts=610
+Cycle 7: live=1889 allocations=6 starts=697
+Cycle 8: live=1889 allocations=6 starts=784
+Cycle 9: live=1889 allocations=6 starts=871
+Cycle 10: live=1889 allocations=6 starts=958
+Cycle 11: live=1889 allocations=6 starts=1045
+Cycle 12: live=1889 allocations=6 starts=1132
+Cycle 13: live=1889 allocations=6 starts=1219
+Cycle 14: live=1889 allocations=6 starts=1306
+Cycle 15: live=1889 allocations=6 starts=1393
+Cycle 16: live=1889 allocations=6 starts=1480
+Cycle 17: live=1889 allocations=6 starts=1567
+Cycle 18: live=1889 allocations=6 starts=1654
+Cycle 19: live=1889 allocations=6 starts=1741
+Cycle 20: live=1889 allocations=6 starts=1828
+Cycle 21: live=1889 allocations=6 starts=1915
+Cycle 22: live=1889 allocations=6 starts=2002
+Cycle 23: live=1889 allocations=6 starts=2089
+Cycle 24: live=1889 allocations=6 starts=2176
+Cycle 25: live=1889 allocations=6 starts=2263
+Cycle 26: live=1889 allocations=6 starts=2350
+Cycle 27: live=1889 allocations=6 starts=2437
+Cycle 28: live=1889 allocations=6 starts=2524
+Cycle 29: live=1889 allocations=6 starts=2611
+Cycle 30: live=1889 allocations=6 starts=2698
+Cycle 31: live=1889 allocations=6 starts=2785
+Cycle 32: live=1889 allocations=6 starts=2872
+Cycle 33: live=1889 allocations=6 starts=2959
+Cycle 34: live=1889 allocations=6 starts=3046
+Cycle 35: live=1889 allocations=6 starts=3133
+Cycle 36: live=1889 allocations=6 starts=3220
+Cycle 37: live=1889 allocations=6 starts=3307
+Cycle 38: live=1889 allocations=6 starts=3394
+Cycle 39: live=1889 allocations=6 starts=3481
+Cycle 40: live=1889 allocations=6 starts=3568
+Cycle 41: live=1889 allocations=6 starts=3655
+Cycle 42: live=1889 allocations=6 starts=3742
+Cycle 43: live=1889 allocations=6 starts=3829
+Cycle 44: live=1889 allocations=6 starts=3916
+Cycle 45: live=1889 allocations=6 starts=4003
+Cycle 46: live=1889 allocations=6 starts=4090
+Cycle 47: live=1889 allocations=6 starts=4177
+Cycle 48: live=1889 allocations=6 starts=4264
+Cycle 49: live=1889 allocations=6 starts=4351
+Cycle 50: live=1889 allocations=6 starts=4438
+Cycle 51: live=1889 allocations=6 starts=4525
+Cycle 52: live=1889 allocations=6 starts=4612
+Cycle 53: live=1889 allocations=6 starts=4699
+Cycle 54: live=1889 allocations=6 starts=4786
+Cycle 55: live=1889 allocations=6 starts=4873
+Cycle 56: live=1889 allocations=6 starts=4960
+Cycle 57: live=1889 allocations=6 starts=5047
+Cycle 58: live=1889 allocations=6 starts=5134
+Cycle 59: live=1889 allocations=6 starts=5221
+Cycle 60: live=1889 allocations=6 starts=5308
+Cycle 61: live=1889 allocations=6 starts=5395
+Cycle 62: live=1889 allocations=6 starts=5482
+Cycle 63: live=1889 allocations=6 starts=5569
+Cycle 64: live=1889 allocations=6 starts=5656
+Cycle 65: live=1889 allocations=6 starts=5743
+Cycle 66: live=1889 allocations=6 starts=5830
+Cycle 67: live=1889 allocations=6 starts=5917
+Cycle 68: live=1889 allocations=6 starts=6004
+Cycle 69: live=1889 allocations=6 starts=6091
+Cycle 70: live=1889 allocations=6 starts=6178
+Cycle 71: live=1889 allocations=6 starts=6265
+Cycle 72: live=1889 allocations=6 starts=6352
+Cycle 73: live=1889 allocations=6 starts=6439
+Cycle 74: live=1889 allocations=6 starts=6526
+Cycle 75: live=1889 allocations=6 starts=6613
+Cycle 76: live=1889 allocations=6 starts=6700
+Cycle 77: live=1889 allocations=6 starts=6787
+Cycle 78: live=1889 allocations=6 starts=6874
+Cycle 79: live=1889 allocations=6 starts=6961
+Cycle 80: live=1889 allocations=6 starts=7048
+Cycle 81: live=1889 allocations=6 starts=7135
+Cycle 82: live=1889 allocations=6 starts=7222
+Cycle 83: live=1889 allocations=6 starts=7309
+Cycle 84: live=1889 allocations=6 starts=7396
+Cycle 85: live=1889 allocations=6 starts=7483
+Cycle 86: live=1889 allocations=6 starts=7570
+Cycle 87: live=1889 allocations=6 starts=7657
+Cycle 88: live=1889 allocations=6 starts=7744
+Cycle 89: live=1889 alloList destruction: live=0, remaining animation=0
+cations=6 starts=7831
+Cycle 90: live=1889 allocations=6 starts=7918
+Cycle 91: live=1889 allocations=6 starts=8005
+Cycle 92: live=1889 allocations=6 starts=8092
+Cycle 93: live=1889 allocations=6 starts=8179
+Cycle 94: live=1889 allocations=6 starts=8266
+Cycle 95: live=1889 allocations=6 starts=8353
+Cycle 96: live=1889 allocations=6 starts=8440
+Cycle 97: live=1889 allocations=6 starts=8527
+Cycle 98: live=1889 allocations=6 starts=8614
+Cycle 99: live=1889 allocations=6 starts=8701
+PASS: repeated real menu, list and scene allocations return to baseline
+Close 1: live allocations=0, message boxes=0
+Close 2: live allocations=0, message boxes=0
+Close 3: live allocations=0, message boxes=0
+Close 4: live allocations=0, message boxes=0
+Close 5: live allocations=0, message boxes=0
+Close 6: live allocations=0, message boxes=0
+Close 7: live allocations=0, message boxes=0
+Close 8: live allocations=0, message boxes=0
+Close 9: live allocations=0, message boxes=0
+Close 10: live allocations=0, message boxes=0
+Close 11: live allocations=0, message boxes=0
+Close 12: live allocations=0, message boxes=0
+Close 13: live allocations=0, message boxes=0
+Close 14: live allocations=0, message boxes=0
+Close 15: live allocations=0, message boxes=0
+Close 16: live allocations=0, message boxes=0
+Close 17: live allocations=0, message boxes=0
+Close 18: live allocations=0, message boxes=0
+Close 19: live allocations=0, message boxes=0
+Close 20: live allocations=0, message boxes=0
+Close 21: live allocations=0, message boxes=0
+Close 22: live allocations=0, message boxes=0
+Close 23: live allocations=0, message boxes=0
+Close 24: live allocations=0, message boxes=0
+Close 25: live allocations=0, message boxes=0
+Close 26: live allocations=0, message boxes=0
+Close 27: live allocations=0, message boxes=0
+Close 28: live allocations=0, message boxes=0
+Close 29: live allocations=0, message boxes=0
+Close 30: live allocations=0, message boxes=0
+Close 31: live allocations=0, message boxes=0
+Close 32: live allocations=0, message boxes=0
+Close 33: live allocations=0, message boxes=0
+Close 34: live allocations=0, message boxes=0
+Close 35: live allocations=0, message boxes=0
+Close 36: live allocations=0, message boxes=0
+Close 37: live allocations=0, message boxes=0
+Close 38: live allocations=0, message boxes=0
+Close 39: live allocations=0, message boxes=0
+Close 40: live allocations=0, message boxes=0
+Close 41: live allocations=0, message boxes=0
+Close 42: live allocations=0, message boxes=0
+Close 43: live allocations=0, message boxes=0
+Close 44: live allocations=0, message boxes=0
+Close 45: live allocations=0, message boxes=0
+Close 46: live allocations=0, message boxes=0
+Close 47: live allocations=0, message boxes=0
+Close 48: live allocations=0, message boxes=0
+Close 49: live allocations=0, message boxes=0
+Close 50: live allocations=0, message boxes=0
+Close 51: live allocations=0, message boxes=0
+Close 52: live allocations=0, message boxes=0
+Close 53: live allocations=0, message boxes=0
+Close 54: live allocations=0, message boxes=0
+Close 55: live allocations=0, message boxes=0
+Close 56: live allocations=0, message boxes=0
+Close 57: live allocations=0, message boxes=0
+Close 58: live allocations=0, message boxes=0
+Close 59: live allocations=0, message boxes=0
+Close 60: live allocations=0, message boxes=0
+Close 61: live allocations=0, message boxes=0
+Close 62: live allocations=0, message boxes=0
+Close 63: live allocations=0, message boxes=0
+Close 64: live allocations=0, message boxes=0
+Close 65: live allocations=0, message boxes=0
+Close 66: live allocations=0, message boxes=0
+Close 67: live allocations=0, message boxes=0
+Close 68: live allocations=0, message boxes=0
+Close 69: live allocations=0, message boxes=0
+Close 70: live allocations=0, message boxes=0
+Close 71: live allocations=0, message boxes=0
+Close 72: live allocations=0, message boxes=0
+Close 73: live allocations=0, message boxes=0
+Close 74: live allocations=0, message boxes=0
+Close 75: live allocations=0, message boxes=0
+Close 76: live allocations=0, message boxes=0
+Close 77: live allocations=0, message boxes=0
+Close 78: live allocations=0, message boxes=0
+Close 79: live allocations=0, message boxes=0
+Close 80: live allocations=0, message boxes=0
+Close 81: live allocations=0, message boxes=0
+Close 82: live allocations=0, message boxes=0
+Close 83: live allocations=0, message boxes=0
+Close 84: live allocations=0, message boxes=0
+Close 85: live allocations=0, message boxes=0
+Close 86: live allocations=0, message boxes=0
+Close 87: live allocations=0, message boxes=0
+Close 88: live allocations=0, message boxes=0
+Close 89: live allocations=0, message boxes=0
+Close 90: live allocations=0, message boxes=0
+Close 91: live allocations=0, message boxes=0
+Close 92: live allocations=0, message boxes=0
+Close 93: live allocations=0, message boxes=0
+Close 94: live allocations=0, message boxes=0
+Close 95: live allocations=0, message boxes=0
+Close 96: live allocations=0, message boxes=0
+Close 97: live allocations=0, message boxes=0
+Close 98: live allocations=0, message boxes=0
+Close 99: live allocations=0, message boxes=0
+Close 100: live allocations=0, message boxes=0
+PASS: actual app callbacks release every UI object over 100 reopenings
+Close 1: live allocations=0, message boxes=0
+Close 2: live allocations=0, message boxes=0
+Close 3: live allocations=0, message boxes=0
+Close 4: live allocations=0, message boxes=0
+Close 5: live allocations=0, message boxes=0
+Close 6: live allocations=0, message boxes=0
+Close 7: live allocations=0, message boxes=0
+Close 8: live allocations=0, message boxes=0
+Close 9: live allocations=0, message boxes=0
+Close 10: live allocations=0, message boxes=0
+Close 11: live allocations=0, message boxes=0
+Close 12: live allocations=0, message boxes=0
+Close 13: live allocations=0, message boxes=0
+Close 14: live allocations=0, message boxes=0
+Close 15: live allocations=0, message boxes=0
+Close 16: live allocations=0, message boxes=0
+Close 17: live allocations=0, message boxes=0
+Close 18: live allocations=0, message boxes=0
+Close 19: live allocations=0, message boxes=0
+Close 20: live allocations=0, message boxes=0
+Close 21: live allocations=0, message boxes=0
+Close 22: live allocations=0, message boxes=0
+Close 23: live allocations=0, message boxes=0
+Close 24: live allocations=0, message boxes=0
+Close 25: live allocations=0, message boxes=0
+Close 26: live allocations=0, message boxes=0
+Close 27: live allocations=0, message boxes=0
+Close 28: live allocations=0, message boxes=0
+Close 29: live allocations=0, message boxes=0
+Close 30: live allocations=0, message boxes=0
+Close 31: live allocations=0, message boxes=0
+Close 32: live allocations=0, message boxes=0
+Close 33: live allocations=0, message boxes=0
+Close 34: live allocations=0, message boxes=0
+Close 35: live allocations=0, message boxes=0
+Close 36: live allocations=0, message boxes=0
+Close 37: live allocations=0, message boxes=0
+Close 38: live allocations=0, message boxes=0
+Close 39: live allocations=0, message boxes=0
+Close 40: live allocations=0, message boxes=0
+Close 41: live allocations=0, message boxes=0
+Close 42: live allocations=0, message boxes=0
+Close 43: live allocations=0, message boxes=0
+Close 44: live allocations=0, message boxes=0
+Close 45: live allocations=0, message boxes=0
+Close 46: live allocations=0, message boxes=0
+Close 47: live allocations=0, message boxes=0
+Close 48: live allocations=0, message boxes=0
+Close 49: live allocations=0, message boxes=0
+Close 50: live allocations=0, message boxes=0
+Close 51: live allocations=0, message boxes=0
+Close 52: live allocations=0, message boxes=0
+Close 53: live allocations=0, message boxes=0
+Close 54: live allocations=0, message boxes=0
+Close 55: live allocations=0, message boxes=0
+Close 56: live allocations=0, message boxes=0
+Close 57: live allocations=0, message boxes=0
+Close 58: live allocations=0, message boxes=0
+Close 59: live allocations=0, message boxes=0
+Close 60: live allocations=0, message boxes=0
+Close 61: live allocations=0, message boxes=0
+Close 62: live allocations=0, message boxes=0
+Close 63: live allocations=0, message boxes=0
+Close 64: live allocations=0, message boxes=0
+Close 65: live allocations=0, message boxes=0
+Close 66: live allocations=0, message boxes=0
+Close 67: live allocations=0, message boxes=0
+Close 68: live allocations=0, message boxes=0
+Close 69: live allocations=0, message boxes=0
+Close 70: live allocations=0, message boxes=0
+Close 71: live allocations=0, message boxes=0
+Close 72: live allocations=0, message boxes=0
+Close 73: live allocations=0, message boxes=0
+Close 74: live allocations=0, message boxes=0
+Close 75: live allocations=0, message boxes=0
+Close 76: live allocations=0, message boxes=0
+Close 77: live allocations=0, message boxes=0
+Close 78: live allocations=0, message boxes=0
+Close 79: live allocations=0, message boxes=0
+Close 80: live allocations=0, message boxes=0
+Close 81: live allocations=0, message boxes=0
+Close 82: live allocations=0, message boxes=0
+Close 83: live allocations=0, message boxes=0
+Close 84: live allocations=0, message boxes=0
+Close 85: live allocations=0, message boxes=0
+Close 86: live allocations=0, message boxes=0
+Close 87: live allocations=0, message boxes=0
+Close 88: live allocations=0, message boxes=0
+Close 89: live allocations=0, message boxes=0
+Close 90: live allocations=0, message boxes=0
+Close 91: live allocations=0, message boxes=0
+Close 92: live allocations=0, message boxes=0
+Close 93: live allocations=0, message boxes=0
+Close 94: live allocations=0, message boxes=0
+Close 95: live allocations=0, message boxes=0
+Close 96: live allocations=0, message boxes=0
+Close 97: live allocations=0, message boxes=0
+Close 98: live allocations=0, message boxes=0
+Close 99: live allocations=0, message boxes=0
+Close 100: live allocations=0, message boxes=0
+PASS: actual app callbacks release every UI object over 100 reopenings
+Captured Faba early reads delivered: 3 (expected3)
+PASS: actual state-machine replay, phone cascade path, mode/type guards and corrupt CRC rejection
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.001s
+
+OK
+PASS: allocation failure, pending protection, capture, stop, bounds, overflow, reset and export
+PASS: missing storage, no overwrite, reader separation, partial write, retry and full directory
+PASS: PPI allocation/assignment/enable failures release resources; hardware capture payloads, config once, inactive guards, stop cleanup
+Overflow: delivered=64, allocations initial=1 final=1
+PASS: bounded FIFO, overflow, wraparound, coalescing, reentrant callbacks and no runtime allocations
+Retained diagnostic: stop, input, kill, fault, reboot and freeze tests pass
+PASS: add/remove, all257favorites, reopen, empty, capacity, every partial-write length, checksum fallback, sequence wrap and unavailable storage

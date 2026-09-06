@@ -1,0 +1,11 @@
+{
+  "page": "https://www.myfaba.es/",
+  "favicon_url": "https://cdn11.bigcommerce.com/s-mtinyhejqg/product_images/1/faba-logo-favicon-48x48.png",
+  "wordmark_url": "https://cdn11.bigcommerce.com/s-mtinyhejqg/images/stencil/250x86/faba-logo_1690876619__65866.original.png",
+  "retrieved": "2026-09-06",
+  "conversion": "Official small icon resized to 32x32, grayscale threshold 170, LSB-first XBM; monochrome circle with white FABA wordmark.",
+  "sha256": {
+    "official-favicon.png": "7425440c6cf230134920471bfbf10790cbe73f6a71b3522e58dfa480f3c56526",
+    "official-logo.png": "be55797f085a7624f64b1a41ab1111b0c7ca79d904c8904ad3c2b37e24078efe"
+  }
+}

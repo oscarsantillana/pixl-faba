@@ -1,0 +1,34 @@
+NFC antenna match cap
+
+//110pF: 16.9MHz 
+//150pf: 14.8MHz
+//180pF: 14.35MHz
+
+
+Power consumption
+
+
+LCD OFF, SYS OFF: 0.9uA
+LCD ON, SYS OFF: 107.3uA
+LCD ON, SYS WFE: 562uA
+
+LCD ON, BL ON, SYS OFF: 6.04mA
+
+
+
+//flash region 
+//start_addr, length 
+0, 0x26000: MBR + SD  (152KB)
+0x26000, 0x5a000: app (360KB)
+
+
+//new
+0, 0x19000: MBR + SD  (100KB)
+0x19000, 0x50000: app (320KB)
+0x69000, 0x7000: fs (52KB)
+0x76000, 0xa000: bl + param (40KB)
+
+//new2
+0, 0x19000: MBR + SD  (100KB)
+0x19000, 0x5D000: app (372KB)
+0x76000, 0xa000: bl + param (40KB)
